@@ -1,19 +1,14 @@
-import json
 import pytest
 
 from eth_utils import (
     is_address,
-    to_canonical_address,
+    to_checksum_address,
 )
 from ethpm import (
-    ASSETS_DIR,
     Package,
 )
 from ethpm.contract import (
     LinkableContract,
-)
-from ethpm.exceptions import (
-    CannotHandleURI,
 )
 
 from web3 import Web3
@@ -22,12 +17,14 @@ from web3.exceptions import (
 )
 from web3.pm import (
     PM,
-    Registry,
+    ERCRegistry,
+    VyperReferenceRegistry,
+    get_vyper_registry_manifest,
 )
 
 
 @pytest.fixture
-def w3():
+def fresh_w3():
     w3 = Web3(Web3.EthereumTesterProvider())
     w3.eth.defaultAccount = w3.eth.accounts[0]
     w3.eth.defaultContractFactory = LinkableContract
@@ -35,106 +32,170 @@ def w3():
     return w3
 
 
-# Solidity registry
-def test_with_solidity_registry_manifest(w3):
-    manifest_path = ASSETS_DIR / "registry" / "1.0.3.json"
-    manifest = json.loads(manifest_path.read_text())
-    Registry = w3.pm.get_package_from_manifest(manifest)
-    assert Registry.name == "registry"
-    PackageRegistryFactory = Registry.get_contract_factory("PackageRegistry")
-    PackageDBFactory = Registry.get_contract_factory("PackageDB")
-    ReleaseDBFactory = Registry.get_contract_factory("ReleaseDB")
-    assert PackageRegistryFactory.needs_bytecode_linking is False
-    assert PackageDBFactory.needs_bytecode_linking
-    assert ReleaseDBFactory.needs_bytecode_linking
-
-
-# Vyper registry
-@pytest.fixture
-def vy_registry(twig_deployer, w3):
-    registry_path = ASSETS_DIR / "vyper_registry"
-    registry_deployer = twig_deployer(registry_path)
-    registry_package = registry_deployer.deploy("registryV2")
-    registry_instance = registry_package.deployments.get_instance("registryV2")
-    owner = registry_instance.functions.owner().call()
-    assert owner == w3.eth.accounts[0]
-    return Registry(registry_instance.address, w3)
-
-
 def test_pm_get_package_from_manifest(w3):
-    manifest_path = ASSETS_DIR / "vyper_registry" / "1.0.2.json"
-    manifest = json.loads(manifest_path.read_text())
+    manifest = get_vyper_registry_manifest()
     package = w3.pm.get_package_from_manifest(manifest)
     assert isinstance(package, Package)
-    assert package.name == "registry-v2"
+    assert package.name == "vyper-registry"
 
 
-def test_pm_deploy_and_set_registry(w3):
-    assert not hasattr(w3.pm, "registry")
-    w3.pm.deploy_and_set_registry()
-    assert isinstance(w3.pm.registry, Registry)
-    assert is_address(w3.pm.registry.address)
+def test_pm_deploy_and_set_registry(fresh_w3):
+    assert not hasattr(fresh_w3.pm, "registry")
+    registry_address = fresh_w3.pm.deploy_and_set_registry()
+    assert isinstance(fresh_w3.pm.registry, VyperReferenceRegistry)
+    assert is_address(registry_address)
 
 
-def test_pm_set_registry(vy_registry, w3):
-    assert not hasattr(w3.pm, "registry")
-    w3.pm.set_registry(address=to_canonical_address(vy_registry.address))
-    assert isinstance(w3.pm.registry, Registry)
-    assert is_address(w3.pm.registry.address)
+def test_pm_set_registry_with_vyper_default(empty_vy_registry, fresh_w3):
+    assert not hasattr(fresh_w3.pm, "registry")
+    fresh_w3.pm.set_registry(address=to_checksum_address(empty_vy_registry.address))
+    assert isinstance(fresh_w3.pm.registry, ERCRegistry)
+    assert is_address(fresh_w3.pm.registry.address)
 
 
-def test_pm_must_set_registry_before_registry_interaction_functions(w3):
+def test_pm_set_solidity_registry(empty_sol_registry, fresh_w3):
+    assert not hasattr(fresh_w3.pm, "registry")
+    fresh_w3.pm.registry = empty_sol_registry
+    assert isinstance(fresh_w3.pm.registry, ERCRegistry)
+    assert is_address(fresh_w3.pm.registry.address)
+
+
+def test_pm_must_set_registry_before_all_registry_interaction_functions(fresh_w3):
     with pytest.raises(PMError):
-        w3.pm.release_package(
-            b"package",
-            b"1.0.0",
-            b"ipfs://Qme4otpS88NV8yQi8TfTP89EsQC5bko3F5N1yhRoi6cwGe",
+        fresh_w3.pm.release_package(
+            "package", "1.0.0", "ipfs://Qme4otpS88NV8yQi8TfTP89EsQC5bko3F5N1yhRoi6cwGe"
         )
     with pytest.raises(PMError):
-        w3.pm.get_release_data(b"package", b"1.0.0")
+        fresh_w3.pm.get_release_id_data(b"invalid_release_id")
     with pytest.raises(PMError):
-        w3.pm.get_package(b"package", b"1.0.0")
+        fresh_w3.pm.get_release_id("package", "1.0.0")
+    with pytest.raises(PMError):
+        fresh_w3.pm.get_release_data("package", "1.0.0")
+    with pytest.raises(PMError):
+        fresh_w3.pm.get_package("package", "1.0.0")
+    with pytest.raises(PMError):
+        fresh_w3.pm.get_all_package_names()
+    with pytest.raises(PMError):
+        fresh_w3.pm.get_all_package_releases("package")
+    with pytest.raises(PMError):
+        fresh_w3.pm.get_release_count("package")
+    with pytest.raises(PMError):
+        fresh_w3.pm.get_package_count()
 
 
-def test_pm_release_package(w3):
-    w3.pm.deploy_and_set_registry()
+@pytest.mark.parametrize(
+    "registry_getter", ["empty_vy_registry", "empty_sol_registry"], indirect=True
+)
+def test_pm_release_package(registry_getter, w3):
+    w3.pm.registry = registry_getter
     w3.pm.release_package(
-        b"package", b"1.0.0", b"ipfs://Qme4otpS88NV8yQi8TfTP89EsQC5bko3F5N1yhRoi6cwGe"
+        "package123", "1.0.0", "ipfs://Qme4otpS88NV8yQi8TfTP89EsQC5bko3F5N1yhRoi6cwGE"
     )
-    package_data = w3.pm.get_release_data(b"package", b"1.0.0")
-    assert package_data[0] == b"package"
-    assert package_data[1] == b"1.0.0"
-    assert package_data[2] == b"ipfs://Qme4otpS88NV8yQi8TfTP89EsQC5bko3F5N1yhRoi6cwGe"
+    w3.pm.release_package(
+        "package456", "1.0.0", "ipfs://Qme4otpS88NV8yQi8TfTP89EsQC5bko3F5N1yhRoi6cwGI"
+    )
+    release_id_1 = w3.pm.get_release_id("package123", "1.0.0")
+    release_id_2 = w3.pm.get_release_id("package456", "1.0.0")
+    package_data_1 = w3.pm.get_release_id_data(release_id_1)
+    package_data_2 = w3.pm.get_release_id_data(release_id_2)
+    assert package_data_1[0] == "package123"
+    assert package_data_1[1] == "1.0.0"
+    assert package_data_1[2] == "ipfs://Qme4otpS88NV8yQi8TfTP89EsQC5bko3F5N1yhRoi6cwGE"
+    assert package_data_2[0] == "package456"
+    assert package_data_2[1] == "1.0.0"
+    assert package_data_2[2] == "ipfs://Qme4otpS88NV8yQi8TfTP89EsQC5bko3F5N1yhRoi6cwGI"
 
 
-def test_pm_release_package_raises_exception_with_invalid_from_address(vy_registry, w3):
-    w3.pm.deploy_and_set_registry()
-    w3.eth.defaultAccount = w3.eth.accounts[1]
-    with pytest.raises(PMError):
-        w3.pm.release_package(
-            b"package",
-            b"1.0.0",
-            b"ipfs://Qme4otpS88NV8yQi8TfTP89EsQC5bko3F5N1yhRoi6cwGe",
-        )
+@pytest.mark.parametrize(
+    "registry_getter", ["loaded_vy_registry", "loaded_sol_registry"], indirect=True
+)
+def test_pm_get_release_data(registry_getter, w3):
+    registry, _, _ = registry_getter
+    w3.pm.registry = registry
+    package_data = w3.pm.get_release_data("package", "1.0.0")
+    assert package_data[0] == "package"
+    assert package_data[1] == "1.0.0"
+    assert package_data[2] == "ipfs://Qme4otpS88NV8yQi8TfTP89EsQC5bko3F5N1yhRoi6cwGV"
 
 
-def test_pm_get_package(w3, monkeypatch):
+@pytest.mark.parametrize(
+    "registry_getter", ["loaded_vy_registry", "loaded_sol_registry"], indirect=True
+)
+def test_pm_get_all_package_names(registry_getter, w3):
+    registry, _, _ = registry_getter
+    w3.pm.registry = registry
+    all_pkgs = w3.pm.get_all_package_names()
+    assert all_pkgs == (
+        "package",
+        "package1",
+        "package2",
+        "package3",
+        "package4",
+        "package5",
+    )
+
+
+@pytest.mark.parametrize(
+    "registry_getter", ["loaded_vy_registry", "loaded_sol_registry"], indirect=True
+)
+def test_pm_package_count(registry_getter, w3):
+    registry, _, _ = registry_getter
+    w3.pm.registry = registry
+    assert w3.pm.get_package_count() == 6
+
+
+@pytest.mark.parametrize(
+    "registry_getter", ["loaded_vy_registry", "loaded_sol_registry"], indirect=True
+)
+def test_pm_get_release_count(registry_getter, w3):
+    registry, _, _ = registry_getter
+    w3.pm.registry = registry
+    pkg_0_release_count = w3.pm.get_release_count("package")
+    pkg_1_release_count = w3.pm.get_release_count("package1")
+    pkg_2_release_count = w3.pm.get_release_count("package2")
+    assert pkg_0_release_count == 6
+    assert pkg_1_release_count == 1
+    assert pkg_2_release_count == 1
+
+
+@pytest.mark.parametrize(
+    "registry_getter", ["loaded_vy_registry", "loaded_sol_registry"], indirect=True
+)
+def test_pm_get_all_package_versions(registry_getter, w3):
+    registry, _, _ = registry_getter
+    w3.pm.registry = registry
+    all_rls_pkg_0 = w3.pm.get_all_package_releases("package")
+    all_rls_pkg_1 = w3.pm.get_all_package_releases("package1")
+    all_rls_pkg_2 = w3.pm.get_all_package_releases("package2")
+    assert all_rls_pkg_0 == (
+        ("1.0.0", "ipfs://Qme4otpS88NV8yQi8TfTP89EsQC5bko3F5N1yhRoi6cwGV"),
+        ("1.0.1", "ipfs://Qme4otpS88NV8yQi8TfTP89EsQC5bko3F5N1yhRoi6cwGW"),
+        ("1.0.2", "ipfs://Qme4otpS88NV8yQi8TfTP89EsQC5bko3F5N1yhRoi6cwGX"),
+        ("1.0.3", "ipfs://Qme4otpS88NV8yQi8TfTP89EsQC5bko3F5N1yhRoi6cwGJ"),
+        ("1.0.4", "ipfs://Qme4otpS88NV8yQi8TfTP89EsQC5bko3F5N1yhRoi6cwGK"),
+        ("1.0.5", "ipfs://Qme4otpS88NV8yQi8TfTP89EsQC5bko3F5N1yhRoi6cwGH"),
+    )
+    assert all_rls_pkg_1 == (
+        ("1.0.1", "ipfs://Qme4otpS88NV8yQi8TfTP89EsQC5bko3F5N1yhRoi6cwGZ"),
+    )
+    assert all_rls_pkg_2 == (
+        ("1.0.1", "ipfs://Qme4otpS88NV8yQi8TfTP89EsQC5bko3F5N1yhRoi6cwGT"),
+    )
+
+
+@pytest.mark.parametrize(
+    "registry_getter", ["loaded_vy_registry", "loaded_sol_registry"], indirect=True
+)
+def test_pm_get_package(registry_getter, w3, monkeypatch):
+    registry, _, _ = registry_getter
+    w3.pm.registry = registry
     monkeypatch.setenv(
         "ETHPM_IPFS_BACKEND_CLASS", "ethpm.backends.ipfs.DummyIPFSBackend"
     )
     w3.pm.deploy_and_set_registry()
     w3.pm.release_package(
-        b"package", b"1.0.0", b"ipfs://QmbeVyFLSuEUxiXKwSsEjef6icpdTdA4kGG9BcrJXKNKUW"
+        "owned", "1.0.0", "ipfs://QmbeVyFLSuEUxiXKwSsEjef6icpdTdA4kGG9BcrJXKNKUW"
     )
-    pkg = w3.pm.get_package(b"package", b"1.0.0")
+    pkg = w3.pm.get_package("owned", "1.0.0")
     assert isinstance(pkg, Package)
     assert pkg.name == "owned"
-
-
-def test_pm_get_package_raises_exception_with_invalid_uri(w3):
-    w3.pm.deploy_and_set_registry()
-    w3.pm.release_package(
-        b"package", b"1.0.0", b"https://raw.githubusercontent.com/invalid/uri"
-    )
-    with pytest.raises(CannotHandleURI):
-        w3.pm.get_package(b"package", b"1.0.0")
