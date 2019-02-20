@@ -25,31 +25,46 @@ To run this example, you will need to install a few extra features:
     import web3
 
     from web3 import Web3
-    from solc import compile_source
+    from solc import compile_standard
 
-    # Solidity source code
-    contract_source_code = """
-    pragma solidity ^0.4.21;
+    compiled_sol = compile_standard({
+      "language": "Solidity",
+      "sources": {
+        "Greeter.sol": {
+          "content": '''
+            pragma solidity ^0.5.0;
 
-    contract Greeter {
-        string public greeting;
+            contract Greeter {
+              string public greeting;
 
-        function Greeter() public {
-            greeting = 'Hello';
+              constructor() public {
+                greeting = 'Hello';
+              }
+
+              function setGreeting(string memory _greeting) public {
+                greeting = _greeting;
+              }
+
+              function greet() view public returns (string memory) {
+                return greeting;
+              }
+            }
+           '''
         }
-
-        function setGreeting(string _greeting) public {
-            greeting = _greeting;
+      },
+      "settings": {
+        "outputSelection": {
+          "*": {
+            "*": [ "metadata", "evm.bytecode"]
+          }
         }
+      }
+    })
 
-        function greet() view public returns (string) {
-            return greeting;
-        }
-    }
-    """
-
-    compiled_sol = compile_source(contract_source_code) # Compiled source code
-    contract_interface = compiled_sol['<stdin>:Greeter']
+    # get the bytecode from the output
+    bytecode = compiled_sol['contracts']['Greeter.sol']['Greeter']['evm']['bytecode']['object']
+    # get the abi from the output
+    abi = json.loads(compiled_sol['contracts']['Greeter.sol']['Greeter']['metadata'] )['output']['abi']
 
     # web3.py instance
     w3 = Web3(Web3.EthereumTesterProvider())
@@ -58,7 +73,7 @@ To run this example, you will need to install a few extra features:
     w3.eth.defaultAccount = w3.eth.accounts[0]
 
     # Instantiate and deploy contract
-    Greeter = w3.eth.contract(abi=contract_interface['abi'], bytecode=contract_interface['bin'])
+    Greeter = w3.eth.contract(abi=abi, bytecode=bytecode)
 
     # Submit the transaction that deploys the contract
     tx_hash = Greeter.constructor().transact()
@@ -69,7 +84,7 @@ To run this example, you will need to install a few extra features:
     # Create the contract instance with the newly-deployed address
     greeter = w3.eth.contract(
         address=tx_receipt.contractAddress,
-        abi=contract_interface['abi'],
+        abi=abi,
     )
 
     # Display the default greeting from the contract
@@ -743,7 +758,7 @@ Utils
           '_transactionData': b'',
           '_debatingPeriod': 604800,
           '_newCurator': True})
- 
+
 ContractCaller
 --------------
 
