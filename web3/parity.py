@@ -18,6 +18,23 @@ from web3.personal import (
     sign,
     unlockAccount,
 )
+from web3.shh import (
+    info,
+    newKeyPair,
+    # addPrivateKey,
+    # newSymKey,
+    # addSymKey,
+    # getPublicKey,
+    # getPrivateKey,
+    # getSymKey,
+    # # deleteKeyPair, # deleteKey
+    # post,
+    # newMessageFilter,
+    # # getFilterMessages, # maybe doesn't exist?
+    # deleteMessageFilter,
+    # subscribe, # maybe doesn't exist?
+    # unsubscribe, # maybe doesn't exist?
+)
 
 
 class ParityPersonal(ModuleV2):
@@ -31,6 +48,23 @@ class ParityPersonal(ModuleV2):
     sendTransaction = sendTransaction()
     sign = sign()
     unlockAccount = unlockAccount()
+
+
+class ParityShh(ModuleV2):
+    """
+    https://wiki.parity.io/JSONRPC-shh-module.html
+    """
+    info = info()
+    newKeyPair = newKeyPair()
+    # addPrivateKey = addPrivateKey()
+    # newSymKey = newSymKey()
+    # addSymKey = addSymKey()
+    # getPublicKey = getPublicKey()
+    # getPrivateKey = getPrivateKey()
+    # getSymKey = getSymKey()
+    # post = post()
+    # newMessageFilter = newMessageFilter()
+    # deleteMessageFilter = deleteMessageFilter()
 
 
 class Parity(Module):

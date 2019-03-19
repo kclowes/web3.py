@@ -62,6 +62,7 @@ from web3.net import (
 from web3.parity import (
     Parity,
     ParityPersonal,
+    ParityShh,
 )
 from web3.providers.eth_tester import (
     EthereumTesterProvider,
@@ -95,7 +96,8 @@ def get_default_modules():
         "miner": (Miner,),
         "admin": (Admin,),
         "parity": (Parity, {
-            "personal": (ParityPersonal,)
+            "personal": (ParityPersonal,),
+            "shh": (ParityShh,)
         }),
         "geth": (Geth, {
             "personal": (GethPersonal,)

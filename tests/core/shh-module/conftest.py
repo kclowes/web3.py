@@ -1,10 +1,10 @@
 import pytest
 
-from web3.shh import (
-    Shh,
-)
+# from web3.parity import (
+#     shh,
+# )
 
 
 @pytest.fixture(autouse=True)
-def include_shh_module(web3):
-    Shh.attach(web3, "shh")
+def include_parity_shh_module(web3):
+    web3.parity.shh.attach(web3, "shh")
