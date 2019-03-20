@@ -14,7 +14,9 @@ from web3.providers.eth_tester import (
 )
 
 
-os.environ['WEB3_INFURA_PROJECT_ID'] = 'test-key'
+@pytest.fixture(autouse=True)
+def set_infura_key():
+    os.environ['WEB3_INFURA_PROJECT_ID'] = 'test-key'
 
 
 class PollDelayCounter:
