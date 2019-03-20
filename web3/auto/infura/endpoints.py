@@ -1,11 +1,11 @@
-import logging
 import os
 
 from eth_utils import (
     ValidationError,
 )
+
 from web3.exceptions import (
-    InfuraKeyNotFound
+    InfuraKeyNotFound,
 )
 
 INFURA_MAINNET_DOMAIN = 'mainnet.infura.io'

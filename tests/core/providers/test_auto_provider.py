@@ -4,6 +4,9 @@ import pytest
 from web3.auto import (
     infura,
 )
+from web3.exceptions import (
+    InfuraKeyNotFound,
+)
 from web3.providers import (
     HTTPProvider,
     IPCProvider,
@@ -11,9 +14,6 @@ from web3.providers import (
 )
 from web3.providers.auto import (
     load_provider_from_environment,
-)
-from web3.exceptions import (
-    InfuraKeyNotFound
 )
 
 
