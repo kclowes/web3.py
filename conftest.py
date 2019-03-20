@@ -1,3 +1,4 @@
+import os
 import pytest
 import time
 import warnings
@@ -11,6 +12,9 @@ from web3.main import (
 from web3.providers.eth_tester import (
     EthereumTesterProvider,
 )
+
+
+os.environ['WEB3_INFURA_PROJECT_ID'] = 'test-key'
 
 
 class PollDelayCounter:

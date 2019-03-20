@@ -1,5 +1,4 @@
 import importlib
-import logging
 import pytest
 
 from web3.auto import (
@@ -12,6 +11,9 @@ from web3.providers import (
 )
 from web3.providers.auto import (
     load_provider_from_environment,
+)
+from web3.exceptions import (
+    InfuraKeyNotFound
 )
 
 
@@ -33,72 +35,59 @@ def test_load_provider_from_env(monkeypatch, uri, expected_type, expected_attrs)
         assert getattr(provider, attr) == val
 
 
-@pytest.mark.parametrize('environ_name', ['WEB3_INFURA_API_KEY', 'WEB3_INFURA_PROJECT_ID'])
-def test_web3_auto_infura_empty_key(monkeypatch, caplog, environ_name):
+def test_web3_auto_infura_empty_key(monkeypatch, caplog):
     monkeypatch.setenv('WEB3_INFURA_SCHEME', 'https')
-    monkeypatch.setenv(environ_name, '')
+    monkeypatch.setenv('WEB3_INFURA_API_KEY', '')
+    monkeypatch.setenv('WEB3_INFURA_PROJECT_ID', '')
 
-    importlib.reload(infura)
-    assert len(caplog.record_tuples) == 1
-    logger, level, msg = caplog.record_tuples[0]
-    assert 'WEB3_INFURA_PROJECT_ID' in msg
-    assert level == logging.WARNING
-
-    w3 = infura.w3
-    assert isinstance(w3.provider, HTTPProvider)
-    assert getattr(w3.provider, 'endpoint_uri') == 'https://mainnet.infura.io/'
+    with pytest.raises(InfuraKeyNotFound):
+        importlib.reload(infura)
 
 
-@pytest.mark.parametrize('environ_name', ['WEB3_INFURA_API_KEY', 'WEB3_INFURA_PROJECT_ID'])
-def test_web3_auto_infura_deleted_key(monkeypatch, caplog, environ_name):
+def test_web3_auto_infura_deleted_key(monkeypatch, caplog):
     monkeypatch.setenv('WEB3_INFURA_SCHEME', 'https')
-    monkeypatch.delenv(environ_name, raising=False)
-
     importlib.reload(infura)
-    assert len(caplog.record_tuples) == 1
-    logger, level, msg = caplog.record_tuples[0]
-    assert 'WEB3_INFURA_PROJECT_ID' in msg
-    assert level == logging.WARNING
+    monkeypatch.delenv('WEB3_INFURA_API_KEY', raising=False)
+    monkeypatch.delenv('WEB3_INFURA_PROJECT_ID', raising=False)
 
-    w3 = infura.w3
-    assert isinstance(w3.provider, HTTPProvider)
-    assert getattr(w3.provider, 'endpoint_uri') == 'https://mainnet.infura.io/'
+    with pytest.raises(InfuraKeyNotFound):
+        importlib.reload(infura)
 
 
-@pytest.mark.parametrize('environ_name', ['WEB3_INFURA_API_KEY', 'WEB3_INFURA_PROJECT_ID'])
-def test_web3_auto_infura_websocket_empty_key(monkeypatch, caplog, environ_name):
-    monkeypatch.setenv(environ_name, '')
+def test_web3_auto_infura_websocket_empty_key(monkeypatch, caplog):
+    monkeypatch.setenv('WEB3_INFURA_API_KEY', '')
+    monkeypatch.setenv('WEB3_INFURA_PROJECT_ID', '')
 
-    importlib.reload(infura)
-    assert len(caplog.record_tuples) == 1
-    logger, level, msg = caplog.record_tuples[0]
-    assert 'WEB3_INFURA_PROJECT_ID' in msg
-    assert level == logging.WARNING
-
-    w3 = infura.w3
-    assert isinstance(w3.provider, WebsocketProvider)
-    assert getattr(w3.provider, 'endpoint_uri') == 'wss://mainnet.infura.io/ws/'
+    with pytest.raises(InfuraKeyNotFound):
+        importlib.reload(infura)
 
 
 @pytest.mark.parametrize('environ_name', ['WEB3_INFURA_API_KEY', 'WEB3_INFURA_PROJECT_ID'])
 def test_web3_auto_infura_websocket_deleted_key(monkeypatch, caplog, environ_name):
-    monkeypatch.delenv(environ_name, raising=False)
-
+    monkeypatch.setenv(environ_name, '1234')
     importlib.reload(infura)
-    assert len(caplog.record_tuples) == 1
-    logger, level, msg = caplog.record_tuples[0]
-    assert 'WEB3_INFURA_PROJECT_ID' in msg
-    assert level == logging.WARNING
 
-    w3 = infura.w3
-    assert isinstance(w3.provider, WebsocketProvider)
-    assert getattr(w3.provider, 'endpoint_uri') == 'wss://mainnet.infura.io/ws/'
+    monkeypatch.delenv('WEB3_INFURA_API_KEY', raising=False)
+    monkeypatch.delenv('WEB3_INFURA_PROJECT_ID', raising=False)
+
+    with pytest.raises(InfuraKeyNotFound):
+        importlib.reload(infura)
+
+
+def test_web3_auto_infura_websocket_deleted_key_api_key(monkeypatch, caplog):
+    monkeypatch.delenv('WEB3_INFURA_API_KEY', raising=False)
+    monkeypatch.delenv('WEB3_INFURA_PROJECT_ID', raising=False)
+
+    with pytest.raises(InfuraKeyNotFound):
+        importlib.reload(infura)
 
 
 @pytest.mark.parametrize('environ_name', ['WEB3_INFURA_API_KEY', 'WEB3_INFURA_PROJECT_ID'])
 def test_web3_auto_infura(monkeypatch, caplog, environ_name):
     monkeypatch.setenv('WEB3_INFURA_SCHEME', 'https')
     API_KEY = 'aoeuhtns'
+    monkeypatch.delenv('WEB3_INFURA_API_KEY', raising=False)
+    monkeypatch.delenv('WEB3_INFURA_PROJECT_ID', raising=False)
     monkeypatch.setenv(environ_name, API_KEY)
     expected_url = 'https://%s/v3/%s' % (infura.INFURA_MAINNET_DOMAIN, API_KEY)
 
@@ -112,6 +101,8 @@ def test_web3_auto_infura(monkeypatch, caplog, environ_name):
 
 @pytest.mark.parametrize('environ_name', ['WEB3_INFURA_API_KEY', 'WEB3_INFURA_PROJECT_ID'])
 def test_web3_auto_infura_websocket_default(monkeypatch, caplog, environ_name):
+    monkeypatch.delenv('WEB3_INFURA_API_KEY', raising=False)
+    monkeypatch.delenv('WEB3_INFURA_PROJECT_ID', raising=False)
     monkeypatch.setenv('WEB3_INFURA_SCHEME', 'wss')
     API_KEY = 'aoeuhtns'
     monkeypatch.setenv(environ_name, API_KEY)
