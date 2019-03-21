@@ -14,9 +14,9 @@ from web3.providers.eth_tester import (
 )
 
 
-@pytest.fixture(autouse=True)
-def set_infura_key():
-    os.environ['WEB3_INFURA_PROJECT_ID'] = 'test-key'
+# TODO: Take out when ethpm issue https://github.com/ethpm/py-ethpm/issues/148
+# gets closed
+os.environ['WEB3_INFURA_PROJECT_ID'] = 'test-key'
 
 
 class PollDelayCounter:
