@@ -1,9 +1,7 @@
 import importlib
+import os
 import pytest
 
-from web3.auto import (
-    infura,
-)
 from web3.exceptions import (
     InfuraKeyNotFound,
 )
@@ -15,6 +13,14 @@ from web3.providers import (
 from web3.providers.auto import (
     load_provider_from_environment,
 )
+
+# Ugly hack to import infura now that API KEY is required
+os.environ['WEB3_INFURA_API_KEY'] = 'test'
+from web3.auto import (  # noqa E402 isort:skip
+    infura,
+)
+del os.environ['WEB3_INFURA_API_KEY']
+# end ugly hack
 
 
 @pytest.mark.parametrize(
@@ -46,7 +52,7 @@ def test_web3_auto_infura_empty_key(monkeypatch, caplog):
 
 def test_web3_auto_infura_deleted_key(monkeypatch, caplog):
     monkeypatch.setenv('WEB3_INFURA_SCHEME', 'https')
-    importlib.reload(infura)
+
     monkeypatch.delenv('WEB3_INFURA_API_KEY', raising=False)
     monkeypatch.delenv('WEB3_INFURA_PROJECT_ID', raising=False)
 

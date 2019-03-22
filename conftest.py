@@ -14,11 +14,6 @@ from web3.providers.eth_tester import (
 )
 
 
-# TODO: Take out when ethpm issue https://github.com/ethpm/py-ethpm/issues/148
-# gets closed
-os.environ['WEB3_INFURA_PROJECT_ID'] = 'test-key'
-
-
 class PollDelayCounter:
     def __init__(self, initial_delay=0, max_delay=1, initial_step=0.01):
         self.initial_delay = initial_delay
