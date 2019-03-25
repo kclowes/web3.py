@@ -119,5 +119,6 @@ def test_web3_auto_infura_raises_error_with_nonexistent_scheme(monkeypatch):
     monkeypatch.setenv('WEB3_INFURA_API_KEY', 'test')
     monkeypatch.setenv('WEB3_INFURA_SCHEME', 'not-a-scheme')
 
-    with pytest.raises(ValidationError):
+    error_msg = "Cannot connect to Infura with scheme 'not-a-scheme'"
+    with pytest.raises(ValidationError, match=error_msg):
         importlib.reload(infura)
