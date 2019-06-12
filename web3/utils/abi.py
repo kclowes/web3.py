@@ -7,9 +7,9 @@ import re
 from eth_abi import (
     is_encodable as eth_abi_is_encodable,
 )
-from eth_abi.abi import (
-    collapse_type,
-    process_type,
+from eth_abi.grammar import (
+    normalize,
+    parse,
 )
 from eth_utils import (
     is_hex,
@@ -115,7 +115,12 @@ def is_encodable(_type, value):
     try:
         base, sub, arrlist = _type
     except ValueError:
-        base, sub, arrlist = process_type(_type)
+        normalized_type_str = normalize(_type)
+        type_object = parse(normalized_type_str)
+
+        base = type_object.base
+        sub = type_object.sub
+        arrlist = type_object.arrlist
 
     if arrlist:
         if not is_list_like(value):
@@ -495,6 +500,8 @@ class ABITypedData(namedtuple('ABITypedData', 'abi_type, data')):
     def __new__(cls, iterable):
         return super().__new__(cls, *iterable)
 
+def collapse_type(base, sub, arrlist):
+    return base + sub + ''.join(map(repr, arrlist))
 
 def abi_sub_tree(data_type, data_value):
     if data_type is None:
@@ -503,9 +510,17 @@ def abi_sub_tree(data_type, data_value):
     try:
         base, sub, arrlist = data_type
     except ValueError:
-        base, sub, arrlist = process_type(data_type)
+        normalized_type_str = normalize(data_type)
+        type_object = parse(normalized_type_str)
+        arrlist = type_object.arrlist
+        base = type_object.base
+        sub = type_object.sub
 
-    collapsed = collapse_type(base, sub, arrlist)
+    if isinstance(base, str):
+        collapsed = base
+    else:
+        collapsed = collapse_type(*base)
+
 
     if arrlist:
         sub_type = (base, sub, arrlist[:-1])

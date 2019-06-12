@@ -5,8 +5,9 @@ from eth_abi import (
     decode_single,
     encode_single,
 )
-from eth_abi.abi import (
-    process_type,
+from eth_abi.grammar import (
+    normalize,
+    parse,
 )
 from eth_utils import (
     encode_hex,
@@ -121,7 +122,8 @@ def construct_event_data_set(event_abi, arguments=None):
 
 
 def is_dynamic_sized_type(_type):
-    base_type, type_size, arrlist = process_type(_type)
+    normalized_type_str = normalize(type_str)
+    base_type, type_size, arrlist = parse(normalized_type_str)
     if arrlist:
         return True
     elif base_type == 'string':

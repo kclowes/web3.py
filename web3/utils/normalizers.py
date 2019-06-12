@@ -6,9 +6,9 @@ from distutils.version import (
 import functools
 import json
 
-import eth_abi
-from eth_abi.abi import (
-    process_type,
+from eth_abi.grammar import (
+    normalize,
+    parse,
 )
 from eth_utils import (
     to_checksum_address,
@@ -79,7 +79,12 @@ def decode_abi_strings(abi_type, data):
 
 @implicitly_identity
 def abi_bytes_to_hex(abi_type, data):
-    base, sub, arrlist = process_type(abi_type)
+    normalized_type_str = normalize(abi_type)
+    type_object = parse(normalized_type_str)
+    base = type_object.base
+    sub = type_object.sub
+    arrlist = type_object.arrlist
+
     if base == 'bytes' and not arrlist:
         bytes_data = hexstr_if_str(to_bytes, data)
         if not sub:
@@ -99,7 +104,12 @@ def abi_bytes_to_hex(abi_type, data):
 
 @implicitly_identity
 def abi_int_to_hex(abi_type, data):
-    base, _sub, arrlist = process_type(abi_type)
+    normalized_type_str = normalize(abi_type)
+    type_object = parse(normalized_type_str)
+    arrlist = type_object.arrlist
+    base = type_object.base
+    sub = type_object.sub
+
     if base == 'uint' and not arrlist:
         return abi_type, hexstr_if_str(to_hex, data)
 
@@ -118,7 +128,12 @@ def abi_string_to_text(abi_type, data):
 
 @implicitly_identity
 def abi_bytes_to_bytes(abi_type, data):
-    base, sub, arrlist = process_type(abi_type)
+    normalized_type_str = normalize(abi_type)
+    type_object = parse(normalized_type_str)
+    arrlist = type_object.arrlist
+    base = type_object.base
+    sub = type_object.sub
+
     if base == 'bytes' and not arrlist:
         return abi_type, hexstr_if_str(to_bytes, data)
 
@@ -160,8 +175,8 @@ BASE_RETURN_NORMALIZERS = [
 ]
 
 
-if LooseVersion(eth_abi.__version__) < LooseVersion("2"):
-    BASE_RETURN_NORMALIZERS.append(decode_abi_strings)
+# if LooseVersion(eth_abi.__version__) < LooseVersion("2"):
+#     BASE_RETURN_NORMALIZERS.append(decode_abi_strings)
 
 
 #
