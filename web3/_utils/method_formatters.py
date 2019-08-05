@@ -2,7 +2,7 @@ import codecs
 import operator
 
 from eth_utils.curried import (
-    combine_argument_formatters,
+    apply_formatters_to_sequence,
     is_address,
     is_bytes,
     is_dict,
@@ -17,6 +17,7 @@ from eth_utils.curried import (
 from eth_utils.toolz import (
     complement,
     compose,
+    curried,
     curry,
     partial,
 )
@@ -52,10 +53,6 @@ from web3._utils.normalizers import (
 from web3._utils.rpc_abi import (
     RPC_ABIS,
     abi_request_formatters,
-)
-from web3._utils.toolz.curried import (
-    keymap,
-    valmap,
 )
 from web3.datastructures import (
     AttributeDict,
@@ -125,6 +122,15 @@ TRANSACTION_FORMATTERS = {
 
 
 transaction_formatter = apply_formatters_to_dict(TRANSACTION_FORMATTERS)
+
+
+SIGNED_TX_FORMATTER = {
+    'raw': HexBytes,
+    'tx': transaction_formatter,
+}
+
+
+signed_tx_formatter = apply_formatters_to_dict(SIGNED_TX_FORMATTER)
 
 
 WHISPER_LOG_FORMATTERS = {
@@ -201,6 +207,27 @@ BLOCK_FORMATTERS = {
 block_formatter = apply_formatters_to_dict(BLOCK_FORMATTERS)
 
 
+STORAGE_PROOF_FORMATTERS = {
+    'key': HexBytes,
+    'value': HexBytes,
+    'proof': apply_formatter_to_array(HexBytes),
+}
+
+
+ACCOUNT_PROOF_FORMATTERS = {
+    'address': to_checksum_address,
+    'accountProof': apply_formatter_to_array(HexBytes),
+    'balance': to_integer_if_hex,
+    'codeHash': to_hexbytes(32),
+    'nonce': to_integer_if_hex,
+    'storageHash': to_hexbytes(32),
+    'storageProof': apply_formatter_to_array(apply_formatters_to_dict(STORAGE_PROOF_FORMATTERS))
+}
+
+
+proof_formatter = apply_formatters_to_dict(ACCOUNT_PROOF_FORMATTERS)
+
+
 SYNCING_FORMATTERS = {
     'startingBlock': to_integer_if_hex,
     'currentBlock': to_integer_if_hex,
@@ -215,12 +242,12 @@ syncing_formatter = apply_formatters_to_dict(SYNCING_FORMATTERS)
 
 TRANSACTION_POOL_CONTENT_FORMATTERS = {
     'pending': compose(
-        keymap(to_ascii_if_bytes),
-        valmap(transaction_formatter),
+        curried.keymap(to_ascii_if_bytes),
+        curried.valmap(transaction_formatter),
     ),
     'queued': compose(
-        keymap(to_ascii_if_bytes),
-        valmap(transaction_formatter),
+        curried.keymap(to_ascii_if_bytes),
+        curried.valmap(transaction_formatter),
     ),
 }
 
@@ -231,8 +258,8 @@ transaction_pool_content_formatter = apply_formatters_to_dict(
 
 
 TRANSACTION_POOL_INSPECT_FORMATTERS = {
-    'pending': keymap(to_ascii_if_bytes),
-    'queued': keymap(to_ascii_if_bytes),
+    'pending': curried.keymap(to_ascii_if_bytes),
+    'queued': curried.keymap(to_ascii_if_bytes),
 }
 
 
@@ -255,21 +282,19 @@ filter_result_formatter = apply_one_of_formatters((
     (apply_formatter_to_array(to_hexbytes(32)), is_array_of_strings),
 ))
 
-TRANSACTION_PARAM_FORMATTERS = {
-    'chainId': apply_formatter_if(is_integer, str),
-}
-
 
 transaction_param_formatter = compose(
     remove_key_if('to', lambda txn: txn['to'] in {'', b'', None}),
-    apply_formatters_to_dict(TRANSACTION_PARAM_FORMATTERS),
 )
 
+
 estimate_gas_without_block_id = apply_formatter_at_index(transaction_param_formatter, 0)
-estimate_gas_with_block_id = combine_argument_formatters(
+
+
+estimate_gas_with_block_id = apply_formatters_to_sequence([
     transaction_param_formatter,
     block_number_formatter,
-)
+])
 
 
 PYTHONIC_REQUEST_FORMATTERS = {
@@ -281,6 +306,7 @@ PYTHONIC_REQUEST_FORMATTERS = {
         0,
     ),
     'eth_getCode': apply_formatter_at_index(block_number_formatter, 1),
+    'eth_getProof': apply_formatter_at_index(block_number_formatter, 2),
     'eth_getStorageAt': apply_formatter_at_index(block_number_formatter, 2),
     'eth_getTransactionByBlockNumberAndIndex': compose(
         apply_formatter_at_index(block_number_formatter, 0),
@@ -295,10 +321,10 @@ PYTHONIC_REQUEST_FORMATTERS = {
     'eth_getUncleByBlockHashAndIndex': apply_formatter_at_index(integer_to_hex, 1),
     'eth_newFilter': apply_formatter_at_index(filter_params_formatter, 0),
     'eth_getLogs': apply_formatter_at_index(filter_params_formatter, 0),
-    'eth_call': combine_argument_formatters(
+    'eth_call': apply_formatters_to_sequence([
         transaction_param_formatter,
         block_number_formatter,
-    ),
+    ]),
     'eth_estimateGas': apply_one_of_formatters((
         (estimate_gas_without_block_id, is_length(1)),
         (estimate_gas_with_block_id, is_length(2)),
@@ -327,6 +353,7 @@ PYTHONIC_RESULT_FORMATTERS = {
     # Eth
     'eth_accounts': apply_formatter_to_array(to_checksum_address),
     'eth_blockNumber': to_integer_if_hex,
+    'eth_chainId': to_integer_if_hex,
     'eth_coinbase': to_checksum_address,
     'eth_estimateGas': to_integer_if_hex,
     'eth_gasPrice': to_integer_if_hex,
@@ -363,6 +390,7 @@ PYTHONIC_RESULT_FORMATTERS = {
     ),
     'eth_sendRawTransaction': to_hexbytes(32),
     'eth_sendTransaction': to_hexbytes(32),
+    'eth_signTransaction': apply_formatter_if(is_not_null, signed_tx_formatter),
     'eth_sign': HexBytes,
     'eth_syncing': apply_formatter_if(is_not_false, syncing_formatter),
     # personal
@@ -370,6 +398,7 @@ PYTHONIC_RESULT_FORMATTERS = {
     'personal_listAccounts': apply_formatter_to_array(to_checksum_address),
     'personal_newAccount': to_checksum_address,
     'personal_sendTransaction': to_hexbytes(32),
+    'personal_signTypedData': HexBytes,
     # SHH
     'shh_getFilterMessages': apply_formatter_to_array(whisper_log_formatter),
     # Transaction Pool
@@ -428,9 +457,9 @@ RESULT_FORMATTER_MAPS = (
     method_filter(ATTRDICT_FORMATTER),
 )
 
+
 #  Note error formatters work on the full response dict
-ERROR_FORMATTER_MAPS = (
-)
+ERROR_FORMATTER_MAPS = ()
 
 
 @to_tuple
