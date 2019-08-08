@@ -35,6 +35,7 @@ from web3._utils.abi import (
     is_string_type,
     is_uint_type,
     length_of_array_type,
+    length_of_bytes_type,
     sub_type_of_array_type,
 )
 from web3._utils.formatters import (
@@ -120,6 +121,19 @@ def validate_abi_value(abi_type, value):
         validate_address(value)
         return
     elif is_bytes_type(abi_type):
+        specified_length = length_of_bytes_type(abi_type)
+        if specified_length is not None:
+            if specified_length > 32:
+                # raise ValidationError?
+                raise TypeError(
+                    f"Invalid abi-type: {abi_type}. Length of byte string"
+                    "must be less than 32."
+                )
+            if specified_length != len(value):
+                raise TypeError(
+                    f"The following byte length does not match the length specified"
+                    "by the abi-type, {abi_type}: {value}"
+                )
         if is_bytes(value):
             return
         elif is_string(value):

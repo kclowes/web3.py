@@ -524,6 +524,19 @@ def length_of_array_type(abi_type):
         return int(inner_brackets)
 
 
+def length_of_bytes_type(abi_type):
+    if not is_bytes_type(abi_type):
+        raise ValueError(
+            f"Cannot parse length of nonbytes abi-type: {abi_type}"
+        )
+
+    byte_length = re.search('(\d{1,2})', abi_type)
+    if not byte_length:
+        return None
+    else:
+        return int(byte_length.group(0))
+
+
 ARRAY_REGEX = (
     "^"
     "[a-zA-Z0-9_]+"
