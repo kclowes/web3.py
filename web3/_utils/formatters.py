@@ -60,19 +60,6 @@ def apply_formatter_if(condition, formatter, value):
 
 
 @curry
-@to_dict
-def apply_formatters_to_dict(formatters, value):
-    for key, item in value.items():
-        if key in formatters:
-            try:
-                yield key, formatters[key](item)
-            except (TypeError, ValueError) as exc:
-                raise type(exc)("Could not format value %r as field %r" % (item, key)) from exc
-        else:
-            yield key, item
-
-
-@curry
 @to_list
 def apply_formatter_to_array(formatter, value):
     for item in value:

@@ -259,7 +259,8 @@ def fund_account(w3):
             SAME_KEY_MIXED_TYPE,
             '0x0000',
         )
-    )
+    ),
+    ids=['txn-set-gas', 'txn-no-set-gas', 'txn-mismatched-sender', 'txn-invalid-sender']
 )
 def test_signed_transaction(
         w3,

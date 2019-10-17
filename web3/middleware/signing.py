@@ -19,7 +19,7 @@ from eth_utils.toolz import (
     compose,
 )
 
-from web3._utils.formatters import (
+from eth_utils.curried import (
     apply_formatter_if,
 )
 from web3._utils.rpc_abi import (
@@ -75,7 +75,7 @@ def _(val):
 
 def private_key_to_account(val):
     normalized_key = key_normalizer(val)
-    return Account.privateKeyToAccount(normalized_key)
+    return Account.from_key(normalized_key)
 
 
 to_account.register(PrivateKey, private_key_to_account)
