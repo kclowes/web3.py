@@ -29,6 +29,7 @@ from web3.exceptions import (
     FallbackNotFound,
     InvalidAddress,
     MismatchedABI,
+    NameNotFound,
     NoABIFound,
     NoABIFunctionsFound,
     ValidationError,
@@ -492,12 +493,10 @@ def test_call_address_reflector_name_array(address_reflector_contract, call):
 
 def test_call_reject_invalid_ens_name(address_reflector_contract, call):
     with contract_ens_addresses(address_reflector_contract, []):
-        with pytest.raises(ValueError):
-            call(
-                contract=address_reflector_contract,
-                contract_function="reflect",
-                func_args=["type0.eth"],
-            )
+        with pytest.raises(NameNotFound):
+            call(contract=address_reflector_contract,
+                 contract_function='reflect',
+                 func_args=['type0.eth'])
 
 
 def test_call_missing_function(mismatched_math_contract, call):
