@@ -50,12 +50,16 @@ from web3.exceptions import (
 from web3.iban import (
     Iban,
 )
+from web3.method import (
+    Method,
+    default_root_munger,
+)
 from web3.module import (
-    Module,
+    ModuleV2,
 )
 
 
-class Eth(Module):
+class Eth(ModuleV2):
     account = Account()
     defaultAccount = empty
     defaultBlock = "latest"
@@ -69,73 +73,95 @@ class Eth(Module):
     def icapNamereg(self):
         raise NotImplementedError()
 
-    @property
-    def protocolVersion(self):
-        return self.web3.manager.request_blocking("eth_protocolVersion", [])
+    get_protocol_version = Method(
+        "eth_protocolVersion",
+        mungers=None,
+    )
 
-    @property
-    def syncing(self):
-        return self.web3.manager.request_blocking("eth_syncing", [])
+    protocolVersion = get_protocol_version
 
-    @property
-    def coinbase(self):
-        return self.web3.manager.request_blocking("eth_coinbase", [])
+    is_syncing = Method(
+        "eth_syncing",
+        mungers=None,
+    )
 
-    @property
-    def mining(self):
-        return self.web3.manager.request_blocking("eth_mining", [])
+    syncing = is_syncing
 
-    @property
-    def hashrate(self):
-        return self.web3.manager.request_blocking("eth_hashrate", [])
+    _coinbase = Method(
+        "eth_coinbase",
+        mungers=None,
+    )
 
-    @property
-    def gasPrice(self):
-        return self.web3.manager.request_blocking("eth_gasPrice", [])
+    coinbase = _coinbase
 
-    @property
-    def accounts(self):
-        return self.web3.manager.request_blocking("eth_accounts", [])
+    is_mining = Method(
+        "eth_mining",
+        mungers=None,
+    )
+    mining = is_mining
 
-    @property
-    def blockNumber(self):
-        return self.web3.manager.request_blocking("eth_blockNumber", [])
+    get_hashrate = Method(
+        "eth_hashrate",
+        mungers=None,
+    )
+    hashrate = get_hashrate
 
-    @property
-    def chainId(self):
-        return self.web3.manager.request_blocking("eth_chainId", [])
+    get_gas_price = Method(
+        "eth_gasPrice",
+        mungers=None,
+    )
+    gasPrice = get_gas_price
 
-    def getBalance(self, account, block_identifier=None):
+    get_accounts = Method(
+        "eth_accounts",
+        mungers=None,
+    )
+    accounts = get_accounts
+
+    get_block_number = Method(
+        "eth_blockNumber",
+        mungers=None,
+    )
+    blockNumber = get_block_number
+
+    get_chain_id = Method(
+        "eth_chainId",
+        mungers=None,
+    )
+    chainId = get_chain_id
+
+    def account_block_identifier_root_munger(self, module, account, block_identifier=None):
         if block_identifier is None:
             block_identifier = self.defaultBlock
-        return self.web3.manager.request_blocking(
-            "eth_getBalance",
-            [account, block_identifier],
-        )
+        return module, [account, block_identifier]
 
-    def getStorageAt(self, account, position, block_identifier=None):
+    getBalance = Method(
+        "eth_getBalance",
+        mungers=[account_block_identifier_root_munger],
+    )
+
+    def account_position_block_id_munger(self, module, account, position, block_identifier=None):
         if block_identifier is None:
             block_identifier = self.defaultBlock
-        return self.web3.manager.request_blocking(
-            "eth_getStorageAt",
-            [account, position, block_identifier]
-        )
+        return module, [account, position, block_identifier]
 
-    def getProof(self, account, positions, block_identifier=None):
-        if block_identifier is None:
-            block_identifier = self.defaultBlock
-        return self.web3.manager.request_blocking(
-            "eth_getProof",
-            [account, positions, block_identifier]
-        )
+    getStorageAt = Method(
+        "eth_getStorageAt",
+        mungers=[account_position_block_id_munger],
+    )
 
-    def getCode(self, account, block_identifier=None):
-        if block_identifier is None:
-            block_identifier = self.defaultBlock
-        return self.web3.manager.request_blocking(
-            "eth_getCode",
-            [account, block_identifier],
-        )
+    getProof = Method(
+        "eth_getProof",
+        mungers=[account_position_block_id_munger]
+    )
+
+    getCode = Method(
+        "eth_getCode",
+        mungers=[account_block_identifier_root_munger],
+    )
+
+    def get_block_arg_munger(self, module, block_identifier, full_transactions):
+        return module, [block_identifier, full_transactions]
 
     def getBlock(self, block_identifier, full_transactions=False):
         """
@@ -149,9 +175,9 @@ class Eth(Module):
             if_number='eth_getBlockByNumber',
         )
 
-        result = self.web3.manager.request_blocking(
+        result = Method(
             method,
-            [block_identifier, full_transactions],
+            mungers=[self.get_block_arg_munger],
         )
         if result is None:
             raise BlockNotFound(f"Block with id: {block_identifier} not found.")
@@ -168,9 +194,9 @@ class Eth(Module):
             if_hash='eth_getBlockTransactionCountByHash',
             if_number='eth_getBlockTransactionCountByNumber',
         )
-        result = self.web3.manager.request_blocking(
+        result = Method(
             method,
-            [block_identifier],
+            mungers=[default_root_munger],
         )
         if result is None:
             raise BlockNotFound(f"Block with id: {block_identifier} not found.")
@@ -187,9 +213,10 @@ class Eth(Module):
             if_hash='eth_getUncleCountByBlockHash',
             if_number='eth_getUncleCountByBlockNumber',
         )
-        result = self.web3.manager.request_blocking(
+
+        result = Method(
             method,
-            [block_identifier],
+            mungers=[default_root_munger],
         )
         if result is None:
             raise BlockNotFound(f"Block with id: {block_identifier} not found.")
@@ -208,7 +235,7 @@ class Eth(Module):
         )
         result = self.web3.manager.request_blocking(
             method,
-            [block_identifier, uncle_index],
+            mungers=[default_root_munger]
         )
         if result is None:
             raise BlockNotFound(
@@ -217,9 +244,9 @@ class Eth(Module):
         return result
 
     def getTransaction(self, transaction_hash):
-        result = self.web3.manager.request_blocking(
+        result = Method(
             "eth_getTransactionByHash",
-            [transaction_hash],
+            mungers=[default_root_munger],
         )
         if result is None:
             raise TransactionNotFound(f"Transaction with hash: {transaction_hash} not found.")
@@ -243,9 +270,9 @@ class Eth(Module):
             if_hash='eth_getTransactionByBlockHashAndIndex',
             if_number='eth_getTransactionByBlockNumberAndIndex',
         )
-        result = self.web3.manager.request_blocking(
+        result = Method(
             method,
-            [block_identifier, transaction_index],
+            mungers=[default_root_munger],
         )
         if result is None:
             raise TransactionNotFound(
@@ -266,21 +293,19 @@ class Eth(Module):
             )
 
     def getTransactionReceipt(self, transaction_hash):
-        result = self.web3.manager.request_blocking(
+        result = Method(
             "eth_getTransactionReceipt",
-            [transaction_hash],
+            mungers=[default_root_munger],
         )
+        # TODO - move these to error handling?
         if result is None:
             raise TransactionNotFound(f"Transaction with hash: {transaction_hash} not found.")
         return result
 
-    def getTransactionCount(self, account, block_identifier=None):
-        if block_identifier is None:
-            block_identifier = self.defaultBlock
-        return self.web3.manager.request_blocking(
-            "eth_getTransactionCount",
-            [account, block_identifier],
-        )
+    getTransactionCount = Method(
+        "eth_getTransactionCount",
+        mungers=[account_block_identifier_root_munger],
+    )
 
     def replaceTransaction(self, transaction_hash, new_transaction):
         current_transaction = get_required_transaction(self.web3, transaction_hash)
@@ -306,16 +331,20 @@ class Eth(Module):
                 get_buffered_gas_estimate(self.web3, transaction),
             )
 
-        return self.web3.manager.request_blocking(
+        return Method(
             "eth_sendTransaction",
-            [transaction],
+            mungers=[default_root_munger],
         )
 
-    def sendRawTransaction(self, raw_transaction):
-        return self.web3.manager.request_blocking(
-            "eth_sendRawTransaction",
-            [raw_transaction],
-        )
+    sendRawTransaction = Method(
+        "eth_sendRawTransaction",
+        mungers=[default_root_munger],
+    )
+    # def sendRawTransaction(self, raw_transaction):
+    #     return self.web3.manager.request_blocking(
+    #         "eth_sendRawTransaction",
+    #         [raw_transaction],
+    #     )
 
     def sign(self, account, data=None, hexstr=None, text=None):
         message_hex = to_hex(data, hexstr=hexstr, text=text)
@@ -323,15 +352,19 @@ class Eth(Module):
             "eth_sign", [account, message_hex],
         )
 
-    def signTransaction(self, transaction):
-        return self.web3.manager.request_blocking(
-            "eth_signTransaction", [transaction],
-        )
+    signTransaction = Method(
+        "eth_signTransaction",
+        mungers=[default_root_munger],
+    )
 
-    def signTypedData(self, account, jsonMessage):
-        return self.web3.manager.request_blocking(
-            "eth_signTypedData", [account, jsonMessage],
-        )
+    signTypedData = Method(
+        "eth_signTypedData",
+        mungers=[default_root_munger],
+    )
+    # def signTypedData(self, account, jsonMessage):
+    #     return self.web3.manager.request_blocking(
+    #         "eth_signTypedData", [account, jsonMessage],
+    #     )
 
     @apply_to_return_value(HexBytes)
     def call(self, transaction, block_identifier=None):
@@ -397,35 +430,35 @@ class Eth(Module):
                             "a valid filter object, or a filter_id as a string "
                             "or hex.")
 
-    def getFilterChanges(self, filter_id):
-        return self.web3.manager.request_blocking(
-            "eth_getFilterChanges", [filter_id],
-        )
+    getFilterChanges = Method(
+        "eth_getFilterChanges",
+        mungers=[default_root_munger],
+    )
 
-    def getFilterLogs(self, filter_id):
-        return self.web3.manager.request_blocking(
-            "eth_getFilterLogs", [filter_id],
-        )
+    getFilterLogs = Method(
+        "eth_getFilterLogs",
+        mungers=[default_root_munger],
+    )
 
-    def getLogs(self, filter_params):
-        return self.web3.manager.request_blocking(
-            "eth_getLogs", [filter_params],
-        )
+    getLogs = Method(
+        "eth_getLogs",
+        mungers=[default_root_munger],
+    )
 
-    def submitHashrate(self, hashrate, node_id):
-        return self.web3.manager.request_blocking(
-            "eth_submitHashrate", [hashrate, node_id],
-        )
+    submitHashrate = Method(
+        "eth_submitHashrate",
+        mungers=[default_root_munger],
+    )
 
-    def submitWork(self, nonce, pow_hash, mix_digest):
-        return self.web3.manager.request_blocking(
-            "eth_submitWork", [nonce, pow_hash, mix_digest],
-        )
+    submitWork = Method(
+        "eth_submitWork",
+        mungers=[default_root_munger],
+    )
 
-    def uninstallFilter(self, filter_id):
-        return self.web3.manager.request_blocking(
-            "eth_uninstallFilter", [filter_id],
-        )
+    uninstallFilter = Method(
+        "eth_uninstallFilter",
+        mungers=[default_root_munger],
+    )
 
     def contract(self,
                  address=None,
@@ -445,8 +478,10 @@ class Eth(Module):
     def getCompilers(self):
         raise DeprecationWarning("This method has been deprecated as of EIP 1474.")
 
-    def getWork(self):
-        return self.web3.manager.request_blocking("eth_getWork", [])
+    getWork = Method(
+        "eth_getWork",
+        mungers=None
+    )
 
     def generateGasPrice(self, transaction_params=None):
         if self.gasPriceStrategy:
