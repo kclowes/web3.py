@@ -77,21 +77,19 @@ class Eth(ModuleV2):
         "eth_protocolVersion",
         mungers=None,
     )
-
     protocolVersion = get_protocol_version
 
     is_syncing = Method(
         "eth_syncing",
         mungers=None,
     )
-
+    # TODO - Can't call Methods like this
     syncing = is_syncing
 
     _coinbase = Method(
         "eth_coinbase",
         mungers=None,
     )
-
     coinbase = _coinbase
 
     is_mining = Method(
@@ -130,58 +128,65 @@ class Eth(ModuleV2):
     )
     chainId = get_chain_id
 
-    def account_block_identifier_root_munger(self, module, account, block_identifier=None):
+    def block_identifier_munger(self, *args, block_identifier=None):
         if block_identifier is None:
             block_identifier = self.defaultBlock
-        return module, [account, block_identifier]
+        return [*args, block_identifier]
 
     getBalance = Method(
         "eth_getBalance",
-        mungers=[account_block_identifier_root_munger],
+        mungers=[block_identifier_munger],
     )
 
-    def account_position_block_id_munger(self, module, account, position, block_identifier=None):
-        if block_identifier is None:
-            block_identifier = self.defaultBlock
-        return module, [account, position, block_identifier]
+    # def account_position_block_id_munger(self, account, position, block_identifier=None):
+    #     if block_identifier is None:
+    #         block_identifier = self.defaultBlock
+    #     return [account, position, block_identifier]
 
     getStorageAt = Method(
         "eth_getStorageAt",
-        mungers=[account_position_block_id_munger],
+        mungers=[block_identifier_munger],
     )
 
     getProof = Method(
         "eth_getProof",
-        mungers=[account_position_block_id_munger]
+        mungers=[block_identifier_munger],
     )
 
     getCode = Method(
         "eth_getCode",
-        mungers=[account_block_identifier_root_munger],
+        mungers=[block_identifier_munger],
     )
 
-    def get_block_arg_munger(self, module, block_identifier, full_transactions):
-        return module, [block_identifier, full_transactions]
-
-    def getBlock(self, block_identifier, full_transactions=False):
-        """
-        `eth_getBlockByHash`
-        `eth_getBlockByNumber`
-        """
-        method = select_method_for_block_identifier(
-            block_identifier,
+    getBlock = Method(
+        select_method_for_block_identifier(
             if_predefined='eth_getBlockByNumber',
             if_hash='eth_getBlockByHash',
             if_number='eth_getBlockByNumber',
-        )
+        ),
+        mungers=[default_root_munger],
+    )
 
-        result = Method(
-            method,
-            mungers=[self.get_block_arg_munger],
-        )
-        if result is None:
-            raise BlockNotFound(f"Block with id: {block_identifier} not found.")
-        return result
+    # def getBlock(self, block_identifier, full_transactions=False):
+    #     """
+    #     `eth_getBlockByHash`
+    #     `eth_getBlockByNumber`
+    #     """
+    #     method = select_method_for_block_identifier(
+    #         block_identifier,
+    #         if_predefined='eth_getBlockByNumber',
+    #         if_hash='eth_getBlockByHash',
+    #         if_number='eth_getBlockByNumber',
+    #     )
+
+    #     return Method(
+    #         method,
+    #         mungers=[default_root_munger],
+    #     )
+    #     # # TODO - move these to error handlers
+    #     # if result is None:
+    #     #     raise BlockNotFound(f"Block with id: {block_identifier} not found.")
+    #     # return result
 
     def getBlockTransactionCount(self, block_identifier):
         """
@@ -233,7 +238,7 @@ class Eth(ModuleV2):
             if_hash='eth_getUncleByBlockHashAndIndex',
             if_number='eth_getUncleByBlockNumberAndIndex',
         )
-        result = self.web3.manager.request_blocking(
+        result = Method(
             method,
             mungers=[default_root_munger]
         )
@@ -304,7 +309,7 @@ class Eth(ModuleV2):
 
     getTransactionCount = Method(
         "eth_getTransactionCount",
-        mungers=[account_block_identifier_root_munger],
+        mungers=[block_identifier_munger],
     )
 
     def replaceTransaction(self, transaction_hash, new_transaction):

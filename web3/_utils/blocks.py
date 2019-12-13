@@ -6,6 +6,9 @@ from eth_utils import (
     is_text,
     remove_0x_prefix,
 )
+from eth_utils.toolz import (
+    curry,
+)
 
 
 def is_predefined_block_number(value):
@@ -43,6 +46,7 @@ def is_hex_encoded_block_number(value):
     return 0 <= value_as_int < 2**256
 
 
+@curry
 def select_method_for_block_identifier(value, if_hash, if_number, if_predefined):
     if is_predefined_block_number(value):
         return if_predefined

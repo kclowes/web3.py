@@ -43,6 +43,7 @@ from web3._utils.formatters import (
     integer_to_hex,
     is_array_of_dicts,
     is_array_of_strings,
+    raise_block_not_found_on_no_response,
     remove_key_if,
 )
 from web3._utils.normalizers import (
@@ -435,6 +436,12 @@ STANDARD_NORMALIZERS = [
 ABI_REQUEST_FORMATTERS = abi_request_formatters(STANDARD_NORMALIZERS, RPC_ABIS)
 
 
+NULL_RESULT_FORMATTERS = {
+    'eth_getBlockTransactionCountByNumber': raise_block_not_found_on_no_response,
+    'eth_getBlockTransactionCountByHash': raise_block_not_found_on_no_response,
+}
+
+
 @to_tuple
 def combine_formatters(formatter_maps, method_name):
     for formatter_map in formatter_maps:
@@ -454,7 +461,7 @@ def get_request_formatters(method_name):
 
 def get_result_formatters(method_name):
     formatters = combine_formatters(
-        (PYTHONIC_RESULT_FORMATTERS,),
+        (PYTHONIC_RESULT_FORMATTERS, NULL_RESULT_FORMATTERS),
         method_name
     )
     attrdict_formatter = apply_formatter_if(is_dict and not_attrdict, AttributeDict.recursive)

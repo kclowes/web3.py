@@ -87,13 +87,15 @@ class Method:
             request_formatters=None,
             result_formatters=None,
             error_formatters=None,
-            web3=None):
+            web3=None,
+            json_rpc_method_args=None):
 
         self.json_rpc_method = json_rpc_method
         self.mungers = mungers or [default_munger]
         self.request_formatters = request_formatters or get_request_formatters
         self.result_formatters = result_formatters or get_result_formatters
         self.error_formatters = get_error_formatters
+        self.json_rpc_method_args = json_rpc_method_args
 
     def __get__(self, obj=None, obj_type=None):
         if obj is None:
@@ -104,9 +106,13 @@ class Method:
         return obj.retrieve_caller_fn(self)
 
     @property
-    def method_selector_fn(self):
+    def method_selector_fn(self, *args, **kwargs):
         """Gets the method selector from the config.
         """
+        import pdb; pdb.set_trace()
+        # left off trying to pass args in to here from process params. I'm not sure why the args aren't getting passed..
+        if args:
+            return self.json_rpc_method(args, kwargs)
         if callable(self.json_rpc_method):
             return self.json_rpc_method
         elif isinstance(self.json_rpc_method, (str,)):
@@ -132,7 +138,8 @@ class Method:
 
     def process_params(self, module, *args, **kwargs):
         params = self.input_munger(module, args, kwargs)
-        method = self.method_selector_fn()
+        import pdb; pdb.set_trace()
+        method = self.method_selector_fn(args, kwargs)
         response_formatters = (self.result_formatters(method), self.error_formatters(method))
 
         request = (method, _apply_request_formatters(params, self.request_formatters(method)))

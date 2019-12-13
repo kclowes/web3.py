@@ -19,6 +19,9 @@ from eth_utils.toolz import (
     dissoc,
 )
 
+from web3.exceptions import (
+    BlockNotFound,
+)
 from web3._utils.decorators import (
     reject_recursive_repeats,
 )
@@ -114,3 +117,10 @@ def remove_key_if(key, remove_if, input_dict):
         return dissoc(input_dict, key)
     else:
         return input_dict
+
+
+@curry
+def raise_block_not_found_on_no_response(result, block_identifier):
+    if result is None:
+        raise BlockNotFound(f"Block with id: {block_identifier} not found.")
+    return result
