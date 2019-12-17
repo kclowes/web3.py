@@ -5,6 +5,7 @@ from eth_utils.curried import (
     to_tuple,
 )
 from eth_utils.toolz import (
+    curry,
     pipe,
 )
 
@@ -106,13 +107,9 @@ class Method:
         return obj.retrieve_caller_fn(self)
 
     @property
-    def method_selector_fn(self, *args, **kwargs):
+    def method_selector_fn(self):
         """Gets the method selector from the config.
         """
-        import pdb; pdb.set_trace()
-        # left off trying to pass args in to here from process params. I'm not sure why the args aren't getting passed..
-        if args:
-            return self.json_rpc_method(args, kwargs)
         if callable(self.json_rpc_method):
             return self.json_rpc_method
         elif isinstance(self.json_rpc_method, (str,)):
@@ -138,8 +135,10 @@ class Method:
 
     def process_params(self, module, *args, **kwargs):
         params = self.input_munger(module, args, kwargs)
-        import pdb; pdb.set_trace()
-        method = self.method_selector_fn(args, kwargs)
+        if type(self.json_rpc_method) == curry:
+            # TODO - this is bad... Probs should find a way to not use json_rpc_method
+            self.json_rpc_method = self.json_rpc_method(value=args[0])
+        method = self.method_selector_fn()
         response_formatters = (self.result_formatters(method), self.error_formatters(method))
 
         request = (method, _apply_request_formatters(params, self.request_formatters(method)))

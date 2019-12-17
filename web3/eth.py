@@ -138,11 +138,6 @@ class Eth(ModuleV2):
         mungers=[block_identifier_munger],
     )
 
-    # def account_position_block_id_munger(self, account, position, block_identifier=None):
-    #     if block_identifier is None:
-    #         block_identifier = self.defaultBlock
-    #     return [account, position, block_identifier]
-
     getStorageAt = Method(
         "eth_getStorageAt",
         mungers=[block_identifier_munger],
@@ -158,13 +153,16 @@ class Eth(ModuleV2):
         mungers=[block_identifier_munger],
     )
 
+    def getBlock_munger(module, block_identifier, full_transactions=False):
+        return [block_identifier, full_transactions]
+
     getBlock = Method(
         select_method_for_block_identifier(
             if_predefined='eth_getBlockByNumber',
             if_hash='eth_getBlockByHash',
             if_number='eth_getBlockByNumber',
         ),
-        mungers=[default_root_munger],
+        mungers=[getBlock_munger],
     )
 
     # def getBlock(self, block_identifier, full_transactions=False):
