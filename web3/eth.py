@@ -153,7 +153,7 @@ class Eth(ModuleV2):
         mungers=[block_identifier_munger],
     )
 
-    def getBlock_munger(module, block_identifier, full_transactions=False):
+    def getBlock_munger(self, block_identifier, full_transactions=False):
         return [block_identifier, full_transactions]
 
     getBlock = Method(
@@ -165,86 +165,53 @@ class Eth(ModuleV2):
         mungers=[getBlock_munger],
     )
 
-    # def getBlock(self, block_identifier, full_transactions=False):
-    #     """
-    #     `eth_getBlockByHash`
-    #     `eth_getBlockByNumber`
-    #     """
-    #     method = select_method_for_block_identifier(
-    #         block_identifier,
-    #         if_predefined='eth_getBlockByNumber',
-    #         if_hash='eth_getBlockByHash',
-    #         if_number='eth_getBlockByNumber',
-    #     )
-
-    #     return Method(
-    #         method,
-    #         mungers=[default_root_munger],
-    #     )
-    #     # # TODO - move these to error handlers
-    #     # if result is None:
-    #     #     raise BlockNotFound(f"Block with id: {block_identifier} not found.")
-    #     # return result
-
-    def getBlockTransactionCount(self, block_identifier):
-        """
-        `eth_getBlockTransactionCountByHash`
-        `eth_getBlockTransactionCountByNumber`
-        """
-        method = select_method_for_block_identifier(
-            block_identifier,
+    getBlockTransactionCount = Method(
+        select_method_for_block_identifier(
             if_predefined='eth_getBlockTransactionCountByNumber',
             if_hash='eth_getBlockTransactionCountByHash',
             if_number='eth_getBlockTransactionCountByNumber',
-        )
-        result = Method(
-            method,
-            mungers=[default_root_munger],
-        )
-        if result is None:
-            raise BlockNotFound(f"Block with id: {block_identifier} not found.")
-        return result
+        ),
+        mungers=[default_root_munger],
+    )
 
-    def getUncleCount(self, block_identifier):
-        """
-        `eth_getUncleCountByBlockHash`
-        `eth_getUncleCountByBlockNumber`
-        """
-        method = select_method_for_block_identifier(
-            block_identifier,
+    getUncleCount = Method(
+        select_method_for_block_identifier(
             if_predefined='eth_getUncleCountByBlockNumber',
             if_hash='eth_getUncleCountByBlockHash',
             if_number='eth_getUncleCountByBlockNumber',
-        )
+        ),
+        mungers=[default_root_munger],
+    )
 
-        result = Method(
-            method,
-            mungers=[default_root_munger],
-        )
-        if result is None:
-            raise BlockNotFound(f"Block with id: {block_identifier} not found.")
-        return result
-
-    def getUncleByBlock(self, block_identifier, uncle_index):
-        """
-        `eth_getUncleByBlockHashAndIndex`
-        `eth_getUncleByBlockNumberAndIndex`
-        """
-        method = select_method_for_block_identifier(
-            block_identifier,
+    # TODO - test that this works manually. Tests just pass
+    getUncleByBlock = Method(
+        select_method_for_block_identifier(
             if_predefined='eth_getUncleByBlockNumberAndIndex',
             if_hash='eth_getUncleByBlockHashAndIndex',
             if_number='eth_getUncleByBlockNumberAndIndex',
-        )
-        result = Method(
-            method,
-            mungers=[default_root_munger]
-        )
-        if result is None:
-            raise BlockNotFound(
-                f"Uncle at index: {uncle_index} of block with id: {block_identifier} not found."
-            )
-        return result
+        ),
+        mungers=[default_root_munger],
+    )
+    # def getUncleByBlock(self, block_identifier, uncle_index):
+    #     """
+    #     `eth_getUncleByBlockHashAndIndex`
+    #     `eth_getUncleByBlockNumberAndIndex`
+    #     """
+    #     method = select_method_for_block_identifier(
+    #         block_identifier,
+    #         if_predefined='eth_getUncleByBlockNumberAndIndex',
+    #         if_hash='eth_getUncleByBlockHashAndIndex',
+    #         if_number='eth_getUncleByBlockNumberAndIndex',
+    #     )
+    #     result = Method(
+    #         method,
+    #         mungers=[default_root_munger]
+    #     )
+    #     if result is None:
+    #         raise BlockNotFound(
+    #             f"Uncle at index: {uncle_index} of block with id: {block_identifier} not found."
+    #         )
+    #     return result
 
     def getTransaction(self, transaction_hash):
         result = Method(

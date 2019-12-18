@@ -119,8 +119,9 @@ def remove_key_if(key, remove_if, input_dict):
         return input_dict
 
 
-@curry
-def raise_block_not_found_on_no_response(result, block_identifier):
+def raise_block_not_found_on_no_response(result):
     if result is None:
-        raise BlockNotFound(f"Block with id: {block_identifier} not found.")
+        # TODO - figure out how to pass block_identifier
+        raise BlockNotFound
+        # raise BlockNotFound(f"Block with id: {block_identifier} not found.")
     return result

@@ -437,13 +437,21 @@ ABI_REQUEST_FORMATTERS = abi_request_formatters(STANDARD_NORMALIZERS, RPC_ABIS)
 
 
 NULL_RESULT_FORMATTERS = {
-    'eth_getBlockTransactionCountByNumber': raise_block_not_found_on_no_response,
+    'eth_getBlockByHash': raise_block_not_found_on_no_response,
+    'eth_getBlockByNumber': raise_block_not_found_on_no_response,
     'eth_getBlockTransactionCountByHash': raise_block_not_found_on_no_response,
+    'eth_getBlockTransactionCountByNumber': raise_block_not_found_on_no_response,
+    'eth_getUncleByBlockHashAndIndex': raise_block_not_found_on_no_response,
+    'eth_getUncleByBlockNumberAndIndex': raise_block_not_found_on_no_response,
+    'eth_getUncleCountByBlockHash': raise_block_not_found_on_no_response,
+    'eth_getUncleCountByBlockNumber': raise_block_not_found_on_no_response,
+    'eth_getUncleCountByBlockHashAndIndex': raise_block_not_found_on_no_response,
+    'eth_getUncleCountByBlockNumberAndIndex': raise_block_not_found_on_no_response,
 }
 
 
 @to_tuple
-def combine_formatters(formatter_maps, method_name):
+def combine_formatters_for_method(formatter_maps, method_name):
     for formatter_map in formatter_maps:
         if method_name in formatter_map:
             yield formatter_map[method_name]
@@ -455,12 +463,12 @@ def get_request_formatters(method_name):
         PYTHONIC_REQUEST_FORMATTERS,
         ABI_REQUEST_FORMATTERS
     )
-    formatters = combine_formatters(request_formatter_maps, method_name)
+    formatters = combine_formatters_for_method(request_formatter_maps, method_name)
     return compose(*formatters)
 
 
 def get_result_formatters(method_name):
-    formatters = combine_formatters(
+    formatters = combine_formatters_for_method(
         (PYTHONIC_RESULT_FORMATTERS, NULL_RESULT_FORMATTERS),
         method_name
     )
@@ -473,6 +481,6 @@ def get_error_formatters(method_name):
     #  Note error formatters work on the full response dict
     # TODO - test this function
     error_formatter_maps = ()
-    formatters = combine_formatters(error_formatter_maps, method_name)
+    formatters = combine_formatters_for_method(error_formatter_maps, method_name)
 
     return compose(*formatters)
