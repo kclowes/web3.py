@@ -74,5 +74,3 @@ class ModuleV2(Module):
             self.retrieve_caller_fn = retrieve_async_method_call_fn(web3, self)
         else:
             self.retrieve_caller_fn = retrieve_blocking_method_call_fn(web3, self)
-        # TODO - remove this
-        self.web3 = web3

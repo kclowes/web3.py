@@ -83,50 +83,73 @@ class Eth(ModuleV2):
         "eth_syncing",
         mungers=None,
     )
-    # TODO - Can't call Methods like this
-    syncing = is_syncing
+
+    @property
+    def syncing(self):
+        return self.is_syncing()
 
     _coinbase = Method(
         "eth_coinbase",
         mungers=None,
     )
-    coinbase = _coinbase
+
+    @property
+    def coinbase(self):
+        return self._coinbase()
 
     is_mining = Method(
         "eth_mining",
         mungers=None,
     )
-    mining = is_mining
+
+    @property
+    def mining(self):
+        return self.is_mining()
 
     get_hashrate = Method(
         "eth_hashrate",
         mungers=None,
     )
-    hashrate = get_hashrate
+
+    @property
+    def hashrate(self):
+        return self.get_hashrate()
 
     get_gas_price = Method(
         "eth_gasPrice",
         mungers=None,
     )
-    gasPrice = get_gas_price
+
+    @property
+    def gasPrice(self):
+        return self.get_gas_price()
 
     get_accounts = Method(
         "eth_accounts",
         mungers=None,
     )
-    accounts = get_accounts
+
+    @property
+    def accounts(self):
+        return self.get_accounts()
 
     get_block_number = Method(
         "eth_blockNumber",
         mungers=None,
     )
-    blockNumber = get_block_number
+
+    @property
+    def blockNumber(self):
+        return self.get_block_number()
 
     get_chain_id = Method(
         "eth_chainId",
         mungers=None,
     )
-    chainId = get_chain_id
+
+    @property
+    def chainId(self):
+        return self.get_chain_id()
 
     def block_identifier_munger(self, *args, block_identifier=None):
         if block_identifier is None:
@@ -310,11 +333,6 @@ class Eth(ModuleV2):
         "eth_sendRawTransaction",
         mungers=[default_root_munger],
     )
-    # def sendRawTransaction(self, raw_transaction):
-    #     return self.web3.manager.request_blocking(
-    #         "eth_sendRawTransaction",
-    #         [raw_transaction],
-    #     )
 
     def sign(self, account, data=None, hexstr=None, text=None):
         message_hex = to_hex(data, hexstr=hexstr, text=text)
@@ -331,10 +349,6 @@ class Eth(ModuleV2):
         "eth_signTypedData",
         mungers=[default_root_munger],
     )
-    # def signTypedData(self, account, jsonMessage):
-    #     return self.web3.manager.request_blocking(
-    #         "eth_signTypedData", [account, jsonMessage],
-    #     )
 
     @apply_to_return_value(HexBytes)
     def call(self, transaction, block_identifier=None):
