@@ -151,6 +151,7 @@ class Eth(ModuleV2):
     def chainId(self):
         return self.get_chain_id()
 
+    # TODO - move to middleware
     def block_identifier_munger(self, *args, block_identifier=None):
         if block_identifier is None:
             block_identifier = self.defaultBlock
@@ -215,6 +216,7 @@ class Eth(ModuleV2):
         ),
         mungers=[default_root_munger],
     )
+    # TODO - Add BlockNotFound to middleware
     # def getUncleByBlock(self, block_identifier, uncle_index):
     #     """
     #     `eth_getUncleByBlockHashAndIndex`
@@ -236,14 +238,20 @@ class Eth(ModuleV2):
     #         )
     #     return result
 
-    def getTransaction(self, transaction_hash):
-        result = Method(
-            "eth_getTransactionByHash",
-            mungers=[default_root_munger],
-        )
-        if result is None:
-            raise TransactionNotFound(f"Transaction with hash: {transaction_hash} not found.")
-        return result
+    getTransaction = Method(
+        "eth_getTransactionByHash",
+        mungers=[default_root_munger],
+    )
+    # TODO - Add TransactionNotFound to middleware
+
+    # def getTransaction(self, transaction_hash):
+    #     result = Method(
+    #         "eth_getTransactionByHash",
+    #         mungers=[default_root_munger],
+    #     )
+    #     if result is None:
+    #         raise TransactionNotFound(f"Transaction with hash: {transaction_hash} not found.")
+    #     return result
 
     def getTransactionFromBlock(self, block_identifier, transaction_index):
         """
@@ -290,7 +298,6 @@ class Eth(ModuleV2):
             "eth_getTransactionReceipt",
             mungers=[default_root_munger],
         )
-        # TODO - move these to error handling?
         if result is None:
             raise TransactionNotFound(f"Transaction with hash: {transaction_hash} not found.")
         return result
@@ -311,7 +318,7 @@ class Eth(ModuleV2):
         new_transaction = merge(current_transaction_params, transaction_params)
         return replace_transaction(self.web3, current_transaction, new_transaction)
 
-    def sendTransaction(self, transaction):
+    def sendTransaction_munger(self, transaction):
         # TODO: move to middleware
         if 'from' not in transaction and is_checksum_address(self.defaultAccount):
             transaction = assoc(transaction, 'from', self.defaultAccount)
@@ -323,22 +330,26 @@ class Eth(ModuleV2):
                 'gas',
                 get_buffered_gas_estimate(self.web3, transaction),
             )
+        return [transaction]
 
-        return Method(
-            "eth_sendTransaction",
-            mungers=[default_root_munger],
-        )
+    sendTransaction = Method(
+        "eth_sendTransaction",
+        mungers=[sendTransaction_munger],
+    )
 
     sendRawTransaction = Method(
         "eth_sendRawTransaction",
         mungers=[default_root_munger],
     )
 
-    def sign(self, account, data=None, hexstr=None, text=None):
+    def sign_munger(self, account, data=None, hexstr=None, text=None):
         message_hex = to_hex(data, hexstr=hexstr, text=text)
-        return self.web3.manager.request_blocking(
-            "eth_sign", [account, message_hex],
-        )
+        return [account, message_hex]
+
+    sign = Method(
+        "eth_sign",
+        mungers=[sign_munger],
+    )
 
     signTransaction = Method(
         "eth_signTransaction",
@@ -364,7 +375,7 @@ class Eth(ModuleV2):
             [transaction, block_identifier],
         )
 
-    def estimateGas(self, transaction, block_identifier=None):
+    def estimateGas_munger(self, transaction, block_identifier=None):
         # TODO: move to middleware
         if 'from' not in transaction and is_checksum_address(self.defaultAccount):
             transaction = assoc(transaction, 'from', self.defaultAccount)
@@ -374,10 +385,12 @@ class Eth(ModuleV2):
         else:
             params = [transaction, block_identifier]
 
-        return self.web3.manager.request_blocking(
-            "eth_estimateGas",
-            params,
-        )
+        return params
+
+    estimateGas = Method(
+        "eth_estimateGas",
+        mungers=[estimateGas_munger],
+    )
 
     def filter(self, filter_params=None, filter_id=None):
         if filter_id and filter_params:
@@ -444,6 +457,11 @@ class Eth(ModuleV2):
         mungers=[default_root_munger],
     )
 
+    getWork = Method(
+        "eth_getWork",
+        mungers=None
+    )
+
     def contract(self,
                  address=None,
                  **kwargs):
@@ -462,10 +480,6 @@ class Eth(ModuleV2):
     def getCompilers(self):
         raise DeprecationWarning("This method has been deprecated as of EIP 1474.")
 
-    getWork = Method(
-        "eth_getWork",
-        mungers=None
-    )
 
     def generateGasPrice(self, transaction_params=None):
         if self.gasPriceStrategy:
