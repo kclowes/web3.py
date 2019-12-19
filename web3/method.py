@@ -89,14 +89,14 @@ class Method:
             result_formatters=None,
             error_formatters=None,
             web3=None,
-            json_rpc_method_args=None):
+            method_depends_on_inputs=None):
 
         self.json_rpc_method = json_rpc_method
         self.mungers = mungers or [default_munger]
         self.request_formatters = request_formatters or get_request_formatters
         self.result_formatters = result_formatters or get_result_formatters
         self.error_formatters = get_error_formatters
-        self.json_rpc_method_args = json_rpc_method_args
+        self.method_depends_on_inputs = method_depends_on_inputs
 
     def __get__(self, obj=None, obj_type=None):
         if obj is None:
@@ -135,9 +135,9 @@ class Method:
 
     def process_params(self, module, *args, **kwargs):
         params = self.input_munger(module, args, kwargs)
-        if type(self.json_rpc_method) == curry:
-            # TODO - this is bad... Probs should find a way to not use json_rpc_method
-            self.json_rpc_method = self.json_rpc_method(value=args[0])
+        if self.method_depends_on_inputs:
+            # TODO - Generalize this args[0]
+            self.json_rpc_method = self.method_depends_on_inputs(value=args[0])
         method = self.method_selector_fn()
         response_formatters = (self.result_formatters(method), self.error_formatters(method))
 

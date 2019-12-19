@@ -77,7 +77,10 @@ class Eth(ModuleV2):
         "eth_protocolVersion",
         mungers=None,
     )
-    protocolVersion = get_protocol_version
+
+    @property
+    def protocolVersion(self):
+        return self.get_protocol_version()
 
     is_syncing = Method(
         "eth_syncing",
@@ -181,16 +184,17 @@ class Eth(ModuleV2):
         return [block_identifier, full_transactions]
 
     getBlock = Method(
-        select_method_for_block_identifier(
+        method_depends_on_inputs=select_method_for_block_identifier(
             if_predefined='eth_getBlockByNumber',
             if_hash='eth_getBlockByHash',
             if_number='eth_getBlockByNumber',
         ),
         mungers=[getBlock_munger],
+
     )
 
     getBlockTransactionCount = Method(
-        select_method_for_block_identifier(
+        method_depends_on_inputs=select_method_for_block_identifier(
             if_predefined='eth_getBlockTransactionCountByNumber',
             if_hash='eth_getBlockTransactionCountByHash',
             if_number='eth_getBlockTransactionCountByNumber',
@@ -199,7 +203,7 @@ class Eth(ModuleV2):
     )
 
     getUncleCount = Method(
-        select_method_for_block_identifier(
+        method_depends_on_inputs=select_method_for_block_identifier(
             if_predefined='eth_getUncleCountByBlockNumber',
             if_hash='eth_getUncleCountByBlockHash',
             if_number='eth_getUncleCountByBlockNumber',
@@ -209,49 +213,18 @@ class Eth(ModuleV2):
 
     # TODO - test that this works manually. Tests just pass
     getUncleByBlock = Method(
-        select_method_for_block_identifier(
+        method_depends_on_inputs=select_method_for_block_identifier(
             if_predefined='eth_getUncleByBlockNumberAndIndex',
             if_hash='eth_getUncleByBlockHashAndIndex',
             if_number='eth_getUncleByBlockNumberAndIndex',
         ),
         mungers=[default_root_munger],
     )
-    # TODO - Add BlockNotFound to middleware
-    # def getUncleByBlock(self, block_identifier, uncle_index):
-    #     """
-    #     `eth_getUncleByBlockHashAndIndex`
-    #     `eth_getUncleByBlockNumberAndIndex`
-    #     """
-    #     method = select_method_for_block_identifier(
-    #         block_identifier,
-    #         if_predefined='eth_getUncleByBlockNumberAndIndex',
-    #         if_hash='eth_getUncleByBlockHashAndIndex',
-    #         if_number='eth_getUncleByBlockNumberAndIndex',
-    #     )
-    #     result = Method(
-    #         method,
-    #         mungers=[default_root_munger]
-    #     )
-    #     if result is None:
-    #         raise BlockNotFound(
-    #             f"Uncle at index: {uncle_index} of block with id: {block_identifier} not found."
-    #         )
-    #     return result
 
     getTransaction = Method(
         "eth_getTransactionByHash",
         mungers=[default_root_munger],
     )
-    # TODO - Add TransactionNotFound to middleware
-
-    # def getTransaction(self, transaction_hash):
-    #     result = Method(
-    #         "eth_getTransactionByHash",
-    #         mungers=[default_root_munger],
-    #     )
-    #     if result is None:
-    #         raise TransactionNotFound(f"Transaction with hash: {transaction_hash} not found.")
-    #     return result
 
     def getTransactionFromBlock(self, block_identifier, transaction_index):
         """
@@ -260,27 +233,14 @@ class Eth(ModuleV2):
         """
         raise DeprecationWarning("This method has been deprecated as of EIP 1474.")
 
-    def getTransactionByBlock(self, block_identifier, transaction_index):
-        """
-        `eth_getTransactionByBlockHashAndIndex`
-        `eth_getTransactionByBlockNumberAndIndex`
-        """
-        method = select_method_for_block_identifier(
-            block_identifier,
+    getTransactionByBlock = Method(
+        method_depends_on_inputs=select_method_for_block_identifier(
             if_predefined='eth_getTransactionByBlockNumberAndIndex',
             if_hash='eth_getTransactionByBlockHashAndIndex',
             if_number='eth_getTransactionByBlockNumberAndIndex',
-        )
-        result = Method(
-            method,
-            mungers=[default_root_munger],
-        )
-        if result is None:
-            raise TransactionNotFound(
-                f"Transaction index: {transaction_index} "
-                f"on block id: {block_identifier} not found."
-            )
-        return result
+        ),
+        mungers=[default_root_munger],
+    )
 
     def waitForTransactionReceipt(self, transaction_hash, timeout=120, poll_latency=0.1):
         try:
@@ -293,14 +253,10 @@ class Eth(ModuleV2):
                 )
             )
 
-    def getTransactionReceipt(self, transaction_hash):
-        result = Method(
-            "eth_getTransactionReceipt",
-            mungers=[default_root_munger],
-        )
-        if result is None:
-            raise TransactionNotFound(f"Transaction with hash: {transaction_hash} not found.")
-        return result
+    getTransactionReceipt = Method(
+        "eth_getTransactionReceipt",
+        mungers=[default_root_munger],
+    )
 
     getTransactionCount = Method(
         "eth_getTransactionCount",
@@ -361,19 +317,20 @@ class Eth(ModuleV2):
         mungers=[default_root_munger],
     )
 
-    @apply_to_return_value(HexBytes)
-    def call(self, transaction, block_identifier=None):
-        # TODO: move to middleware
+    def eth_call_munger(self, transaction, block_identifier=None):
         if 'from' not in transaction and is_checksum_address(self.defaultAccount):
             transaction = assoc(transaction, 'from', self.defaultAccount)
 
         # TODO: move to middleware
         if block_identifier is None:
             block_identifier = self.defaultBlock
-        return self.web3.manager.request_blocking(
-            "eth_call",
-            [transaction, block_identifier],
-        )
+
+        return [transaction, block_identifier]
+
+    call = Method(
+        "eth_call",
+        mungers=[eth_call_munger],
+    )
 
     def estimateGas_munger(self, transaction, block_identifier=None):
         # TODO: move to middleware

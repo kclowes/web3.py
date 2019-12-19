@@ -44,6 +44,8 @@ from web3._utils.formatters import (
     is_array_of_dicts,
     is_array_of_strings,
     raise_block_not_found_on_no_response,
+    raise_transaction_not_found_on_no_response,
+    raise_transaction_not_found_on_no_response_with_block_id,
     remove_key_if,
 )
 from web3._utils.normalizers import (
@@ -358,6 +360,7 @@ PYTHONIC_RESULT_FORMATTERS = {
     'eth_blockNumber': to_integer_if_hex,
     'eth_chainId': to_integer_if_hex,
     'eth_coinbase': to_checksum_address,
+    'eth_call': to_hexbytes(32),
     'eth_estimateGas': to_integer_if_hex,
     'eth_gasPrice': to_integer_if_hex,
     'eth_getBalance': to_integer_if_hex,
@@ -441,6 +444,10 @@ NULL_RESULT_FORMATTERS = {
     'eth_getBlockByNumber': raise_block_not_found_on_no_response,
     'eth_getBlockTransactionCountByHash': raise_block_not_found_on_no_response,
     'eth_getBlockTransactionCountByNumber': raise_block_not_found_on_no_response,
+    'eth_getTransactionByBlockHashAndIndex': raise_transaction_not_found_on_no_response_with_block_id,
+    'eth_getTransactionByBlockNumberAndIndex': raise_transaction_not_found_on_no_response_with_block_id,
+    'eth_getTransactionByHash': raise_transaction_not_found_on_no_response,
+    'eth_getTransactionReceipt': raise_transaction_not_found_on_no_response,
     'eth_getUncleByBlockHashAndIndex': raise_block_not_found_on_no_response,
     'eth_getUncleByBlockNumberAndIndex': raise_block_not_found_on_no_response,
     'eth_getUncleCountByBlockHash': raise_block_not_found_on_no_response,
@@ -469,7 +476,8 @@ def get_request_formatters(method_name):
 
 def get_result_formatters(method_name):
     formatters = combine_formatters_for_method(
-        (PYTHONIC_RESULT_FORMATTERS, NULL_RESULT_FORMATTERS),
+        (PYTHONIC_RESULT_FORMATTERS,
+         NULL_RESULT_FORMATTERS),
         method_name
     )
     attrdict_formatter = apply_formatter_if(is_dict and not_attrdict, AttributeDict.recursive)
@@ -478,7 +486,7 @@ def get_result_formatters(method_name):
 
 
 def get_error_formatters(method_name):
-    #  Note error formatters work on the full response dict
+    # Note error formatters work on the full response dict
     # TODO - test this function
     error_formatter_maps = ()
     formatters = combine_formatters_for_method(error_formatter_maps, method_name)

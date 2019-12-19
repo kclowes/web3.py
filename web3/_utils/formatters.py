@@ -21,6 +21,7 @@ from eth_utils.toolz import (
 
 from web3.exceptions import (
     BlockNotFound,
+    TransactionNotFound,
 )
 from web3._utils.decorators import (
     reject_recursive_repeats,
@@ -124,4 +125,23 @@ def raise_block_not_found_on_no_response(result):
         # TODO - figure out how to pass block_identifier
         raise BlockNotFound
         # raise BlockNotFound(f"Block with id: {block_identifier} not found.")
+    return result
+
+
+def raise_transaction_not_found_on_no_response(result):
+    if result is None:
+        # TODO - figure out how to pass transaction_hash
+        raise TransactionNotFound
+    #         raise TransactionNotFound(f"Transaction with hash: {transaction_hash} not found.")
+    return result
+
+
+def raise_transaction_not_found_on_no_response_with_block_id(result):
+    if result is None:
+        # TODO - figure out how to pass block_identifier
+        raise TransactionNotFound
+    #         raise TransactionNotFound(
+    #             f"Transaction index: {transaction_index} "
+    #             f"on block id: {block_identifier} not found."
+    #         )
     return result
