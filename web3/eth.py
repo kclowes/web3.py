@@ -1,5 +1,6 @@
 from typing import (
     Any,
+    Callable,
     Dict,
     List,
     NoReturn,
@@ -156,7 +157,7 @@ class Eth(ModuleV2):
     def mining(self) -> bool:
         return self.is_mining()
 
-    get_hashrate =  Method(
+    get_hashrate = Method(
         RPC.eth_hashrate,
         mungers=None,
     )
@@ -165,7 +166,7 @@ class Eth(ModuleV2):
     def hashrate(self) -> int:
         return self.get_hashrate()
 
-    gas_price =  Method(
+    gas_price: Method[Callable[[], str]] = Method(
         RPC.eth_gasPrice,
         mungers=None,
     )
@@ -285,7 +286,8 @@ class Eth(ModuleV2):
         mungers=[default_root_munger]
     )
 
-    # TODO - raise TransactionNotFound if result is None. (Should we raise if transactionIndex is None? I don't think that result will ever be None.)
+    # TODO - raise TransactionNotFound if result is None.
+    # (Should we raise if transactionIndex is None? I don't think that result will ever be None.)
     getTransaction = Method(
         RPC.eth_getTransactionByHash,
         mungers=[default_root_munger],
@@ -399,7 +401,9 @@ class Eth(ModuleV2):
         mungers=[default_root_munger],
     )
 
-    def eth_call_munger(self, transaction: TxParams, block_identifier: BlockIdentifier=None) -> List:
+    def eth_call_munger(
+        self, transaction: TxParams, block_identifier: BlockIdentifier=None
+    ) -> List:
         if 'from' not in transaction and is_checksum_address(self.defaultAccount):
             transaction = assoc(transaction, 'from', self.defaultAccount)
 
@@ -413,8 +417,9 @@ class Eth(ModuleV2):
         mungers=[eth_call_munger]
     )
 
-    # TODO - return type
-    def estimate_gas_munger(self, transaction: TxParams, block_identifier: BlockIdentifier=None) -> List:
+    def estimate_gas_munger(
+        self, transaction: TxParams, block_identifier: BlockIdentifier=None
+    ) -> Sequence[Union[TxParams, BlockIdentifier]]:
         if 'from' not in transaction and is_checksum_address(self.defaultAccount):
             transaction = assoc(transaction, 'from', self.defaultAccount)
 
