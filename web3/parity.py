@@ -35,6 +35,10 @@ from web3._utils.personal import (
 from web3._utils.rpc_abi import (
     RPC,
 )
+from web3.method import (
+    Method,
+    default_root_munger,
+)
 from web3.module import (
     Module,
     ModuleV2,
@@ -101,7 +105,7 @@ class ParityPersonal(ModuleV2):
     unlockAccount = unlockAccount
 
 
-class Parity(Module):
+class Parity(ModuleV2):
     """
     https://paritytech.github.io/wiki/JSONRPC-parity-module
     """
@@ -109,13 +113,12 @@ class Parity(Module):
     shh: ParityShh
     personal: ParityPersonal
 
-    def enode(self) -> EnodeURI:
-        return self.web3.manager.request_blocking(
-            RPC.parity_enode,
-            [],
-        )
+    enode = Method(
+        RPC.parity_enode,
+        mungers=None,
+    )
 
-    def listStorageKeys(
+    def list_storage_keys_munger(
         self,
         address: Union[Address, ChecksumAddress, ENS],
         quantity: int,
@@ -124,91 +127,84 @@ class Parity(Module):
     ) -> List[Hash32]:
         if block_identifier is None:
             block_identifier = self.defaultBlock
-        return self.web3.manager.request_blocking(
-            RPC.parity_listStorageKeys,
-            [address, quantity, hash_, block_identifier],
-        )
+        return [address, quantity, hash_, block_identifier]
 
-    def netPeers(self) -> ParityNetPeers:
-        return self.web3.manager.request_blocking(
-            RPC.parity_netPeers,
-            [],
-        )
+    listStorageKeys = Method(
+        RPC.parity_listStorageKeys,
+        mungers=[list_storage_keys_munger],
+    )
 
-    def addReservedPeer(self, url: EnodeURI) -> bool:
-        return self.web3.manager.request_blocking(
-            RPC.parity_addReservedPeer,
-            [url],
-        )
+    netPeers = Method(
+        RPC.parity_netPeers,
+        mungers=None
+    )
 
-    def traceReplayTransaction(
-        self, transaction_hash: _Hash32, mode: ParityTraceMode=['trace']
-    ) -> ParityBlockTrace:
-        return self.web3.manager.request_blocking(
-            RPC.trace_replayTransaction,
-            [transaction_hash, mode],
-        )
+    addReservedPeer = Method(
+        RPC.parity_addReservedPeer,
+        mungers=[default_root_munger],
+    )
 
-    def traceReplayBlockTransactions(
+    def trace_transactions_munger(
         self, block_identifier: BlockIdentifier, mode: ParityTraceMode=['trace']
     ) -> List[ParityBlockTrace]:
-        return self.web3.manager.request_blocking(
-            RPC.trace_replayBlockTransactions,
-            [block_identifier, mode]
-        )
+        return [block_identifier, mode]
 
-    def traceBlock(self, block_identifier: BlockIdentifier) -> List[ParityBlockTrace]:
-        return self.web3.manager.request_blocking(
-            RPC.trace_block,
-            [block_identifier]
-        )
+    traceReplayTransaction = Method(
+        RPC.trace_replayTransaction,
+        mungers=[trace_transactions_munger],
+    )
 
-    def traceFilter(self, params: ParityFilterParams) -> List[ParityFilterTrace]:
-        return self.web3.manager.request_blocking(
-            RPC.trace_filter,
-            [params]
-        )
+    traceReplayBlockTransactions = Method(
+        RPC.trace_replayBlockTransactions,
+        mungers=[trace_transactions_munger]
+    )
 
-    def traceTransaction(self, transaction_hash: _Hash32) -> List[ParityFilterTrace]:
-        return self.web3.manager.request_blocking(
-            RPC.trace_transaction,
-            [transaction_hash]
-        )
+    traceBlock = Method(
+        RPC.trace_block,
+        mungers=[default_root_munger],
+    )
 
-    def traceCall(
+    traceFilter = Method(
+        RPC.trace_filter,
+        mungers=[default_root_munger],
+    )
+
+    traceTransaction = Method(
+        RPC.trace_transaction,
+        mungers=[default_root_munger],
+    )
+
+    def trace_call_munger(
         self,
         transaction: TxParams,
         mode: ParityTraceMode=['trace'],
         block_identifier: BlockIdentifier=None
-    ) -> ParityBlockTrace:
-        # TODO: move to middleware
+    ):
         if 'from' not in transaction and is_checksum_address(self.web3.eth.defaultAccount):
             transaction = assoc(transaction, 'from', self.web3.eth.defaultAccount)
 
         # TODO: move to middleware
         if block_identifier is None:
             block_identifier = self.defaultBlock
-        return self.web3.manager.request_blocking(
-            RPC.trace_call,
-            [transaction, mode, block_identifier],
-        )
 
-    def traceRawTransaction(
-        self, raw_transaction: HexStr, mode: ParityTraceMode=['trace']
-    ) -> ParityBlockTrace:
-        return self.web3.manager.request_blocking(
-            RPC.trace_rawTransaction,
-            [raw_transaction, mode],
-        )
+        return [transaction, mode, block_identifier]
 
-    def setMode(self, mode: ParityMode) -> bool:
-        return self.web3.manager.request_blocking(
-            RPC.parity_setMode,
-            [mode]
-        )
+    traceCall = Method(
+        RPC.trace_call,
+        mungers=[trace_call_munger],
+    )
 
-    def mode(self) -> ParityMode:
-        return self.web3.manager.request_blocking(
-            RPC.parity_mode,
-            []
-        )
+    traceRawTransaction = Method(
+        RPC.trace_rawTransaction,
+        mungers=[trace_transactions_munger],
+    )
+
+    setMode = Method(
+        RPC.parity_setMode,
+        mungers=[default_root_munger],
+    )
+
+    mode = Method(
+        RPC.parity_mode,
+        mungers=None
+    )

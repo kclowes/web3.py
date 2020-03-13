@@ -75,6 +75,7 @@ from web3.datastructures import (
 from web3.exceptions import (
     BlockNotFound,
     TransactionNotFound,
+    InvalidParityMode,
 )
 from web3.types import (
     BlockIdentifier,
@@ -498,6 +499,13 @@ STANDARD_NORMALIZERS = [
 
 ABI_REQUEST_FORMATTERS = abi_request_formatters(STANDARD_NORMALIZERS, RPC_ABIS)
 
+def raise_invalid_parity_mode(response):
+    error_message = response['error']['message']
+    raise InvalidParityMode(error_message)
+
+ERROR_FORMATTERS = {
+    RPC.parity_setMode: raise_invalid_parity_mode,
+}
 
 @to_tuple
 def combine_formatters(
@@ -548,7 +556,7 @@ def get_error_formatters(
 ) -> Dict[str, Callable[..., Any]]:
     #  Note error formatters work on the full response dict
     # TODO - test this function
-    error_formatter_maps = ()
+    error_formatter_maps = (ERROR_FORMATTERS,)
     formatters = combine_formatters(error_formatter_maps, method_name)
 
     return compose(*formatters)

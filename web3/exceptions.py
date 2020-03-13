@@ -169,3 +169,11 @@ class InvalidEventABI(ValueError):
     Raised when the event ABI is invalid.
     """
     pass
+
+
+class InvalidParityMode(TypeError, ValueError):
+    # Inherits from TypeError for backwards compatibility
+    """
+    Raised when web3.parity.setMode() is called with no args
+    """
+    pass
