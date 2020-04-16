@@ -74,12 +74,13 @@ from web3.datastructures import (
 )
 from web3.exceptions import (
     BlockNotFound,
-    TransactionNotFound,
     InvalidParityMode,
+    TransactionNotFound,
 )
 from web3.types import (
     BlockIdentifier,
     RPCEndpoint,
+    RPCResponse,
     TReturn,
     _Hash32,
 )
@@ -499,13 +500,16 @@ STANDARD_NORMALIZERS = [
 
 ABI_REQUEST_FORMATTERS = abi_request_formatters(STANDARD_NORMALIZERS, RPC_ABIS)
 
-def raise_invalid_parity_mode(response):
+
+def raise_invalid_parity_mode(response: RPCResponse) -> NoReturn:
     error_message = response['error']['message']
     raise InvalidParityMode(error_message)
+
 
 ERROR_FORMATTERS = {
     RPC.parity_setMode: raise_invalid_parity_mode,
 }
+
 
 @to_tuple
 def combine_formatters(

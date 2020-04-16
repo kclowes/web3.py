@@ -162,6 +162,7 @@ class ParitySetModuleTest:
             web3.parity.setMode('not a mode')  # type: ignore
 
     def test_set_mode_with_no_argument(self, web3: "Web3") -> None:
-        with pytest.raises(InvalidParityMode, match='Invalid params: invalid length 0, expected a tuple of size 1.'):
+        with pytest.raises(InvalidParityMode,
+                           match='Invalid params: invalid length 0, expected a tuple of size 1.'):
             # type ignored b/c setMode expects arguments
             web3.parity.setMode()  # type: ignore

@@ -1,5 +1,8 @@
 from typing import (
+    Callable,
     List,
+    Optional,
+    Tuple,
     Union,
 )
 
@@ -40,7 +43,6 @@ from web3.method import (
     default_root_munger,
 )
 from web3.module import (
-    Module,
     ModuleV2,
 )
 from web3.types import (
@@ -113,63 +115,68 @@ class Parity(ModuleV2):
     shh: ParityShh
     personal: ParityPersonal
 
-    enode = Method(
+    enode: Method[Callable[[], str]] = Method(
         RPC.parity_enode,
         mungers=None,
     )
 
     def list_storage_keys_munger(
         self,
-        address: Union[Address, ChecksumAddress, ENS],
+        address: Union[Address, ChecksumAddress, ENS, Hash32],
         quantity: int,
         hash_: Hash32,
-        block_identifier: BlockIdentifier=None,
-    ) -> List[Hash32]:
+        block_identifier: Optional[BlockIdentifier]=None,
+    ) -> Tuple[Union[Address, ChecksumAddress, ENS, Hash32], int, Hash32, BlockIdentifier]:
         if block_identifier is None:
             block_identifier = self.defaultBlock
-        return [address, quantity, hash_, block_identifier]
+        return (address, quantity, hash_, block_identifier)
 
-    listStorageKeys = Method(
+    listStorageKeys: Method[Callable[..., List[str]]] = Method(
         RPC.parity_listStorageKeys,
         mungers=[list_storage_keys_munger],
     )
 
-    netPeers = Method(
+    netPeers: Method[Callable[[], ParityNetPeers]] = Method(
         RPC.parity_netPeers,
         mungers=None
     )
 
-    addReservedPeer = Method(
+    addReservedPeer: Method[Callable[[EnodeURI], bool]] = Method(
         RPC.parity_addReservedPeer,
         mungers=[default_root_munger],
     )
 
-    def trace_transactions_munger(
-        self, block_identifier: BlockIdentifier, mode: ParityTraceMode=['trace']
-    ) -> List[ParityBlockTrace]:
-        return [block_identifier, mode]
+    def trace_replay_transaction_munger(
+        self, block_identifier: _Hash32, mode: ParityTraceMode=['trace']
+    ) -> Tuple[Union[BlockIdentifier, _Hash32], ParityTraceMode]:
+        return (block_identifier, mode)
 
-    traceReplayTransaction = Method(
+    traceReplayTransaction: Method[Callable[..., ParityBlockTrace]] = Method(
         RPC.trace_replayTransaction,
-        mungers=[trace_transactions_munger],
+        mungers=[trace_replay_transaction_munger],
     )
 
-    traceReplayBlockTransactions = Method(
+    def trace_replay_block_transactions_munger(
+        self, block_identifier: BlockIdentifier, mode: ParityTraceMode=['trace']
+    ) -> Tuple[BlockIdentifier, ParityTraceMode]:
+        return (block_identifier, mode)
+
+    traceReplayBlockTransactions: Method[Callable[..., List[ParityBlockTrace]]] = Method(
         RPC.trace_replayBlockTransactions,
-        mungers=[trace_transactions_munger]
+        mungers=[trace_replay_block_transactions_munger]
     )
 
-    traceBlock = Method(
+    traceBlock: Method[Callable[[BlockIdentifier], List[ParityBlockTrace]]] = Method(
         RPC.trace_block,
         mungers=[default_root_munger],
     )
 
-    traceFilter = Method(
+    traceFilter: Method[Callable[[ParityFilterParams], List[ParityFilterTrace]]] = Method(
         RPC.trace_filter,
         mungers=[default_root_munger],
     )
 
-    traceTransaction = Method(
+    traceTransaction: Method[Callable[[BlockIdentifier], List[ParityBlockTrace]]] = Method(
         RPC.trace_transaction,
         mungers=[default_root_munger],
     )
@@ -178,8 +185,8 @@ class Parity(ModuleV2):
         self,
         transaction: TxParams,
         mode: ParityTraceMode=['trace'],
-        block_identifier: BlockIdentifier=None
-    ):
+        block_identifier: Optional[BlockIdentifier]=None
+    ) -> Tuple[TxParams, ParityTraceMode, BlockIdentifier]:
         if 'from' not in transaction and is_checksum_address(self.web3.eth.defaultAccount):
             transaction = assoc(transaction, 'from', self.web3.eth.defaultAccount)
 
@@ -187,24 +194,29 @@ class Parity(ModuleV2):
         if block_identifier is None:
             block_identifier = self.defaultBlock
 
-        return [transaction, mode, block_identifier]
+        return (transaction, mode, block_identifier)
 
-    traceCall = Method(
+    traceCall: Method[Callable[..., ParityBlockTrace]] = Method(
         RPC.trace_call,
         mungers=[trace_call_munger],
     )
 
-    traceRawTransaction = Method(
+    def trace_transactions_munger(
+        self, raw_transaction: HexStr, mode: ParityTraceMode=['trace']
+    ) -> Tuple[HexStr, ParityTraceMode]:
+        return (raw_transaction, mode)
+
+    traceRawTransaction: Method[Callable[..., ParityBlockTrace]] = Method(
         RPC.trace_rawTransaction,
         mungers=[trace_transactions_munger],
     )
 
-    setMode = Method(
+    setMode: Method[Callable[[ParityMode], bool]] = Method(
         RPC.parity_setMode,
         mungers=[default_root_munger],
     )
 
-    mode = Method(
+    mode: Method[Callable[[], ParityMode]] = Method(
         RPC.parity_mode,
         mungers=None
     )
