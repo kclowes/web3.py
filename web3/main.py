@@ -98,6 +98,7 @@ from web3.types import (  # noqa: F401
     MiddlewareOnion,
 )
 from web3.version import (
+    AsyncVersion,
     Version,
 )
 
@@ -120,6 +121,12 @@ def get_default_modules() -> Dict[str, Sequence[Any]]:
             "txpool": (GethTxPool,),
         }),
         "testing": (Testing,),
+    }
+
+
+def get_default_async_modules():
+    return {
+        "async_version": (AsyncVersion,),
     }
 
 
@@ -289,3 +296,8 @@ class Web3:
 
     def enable_strict_bytes_type_checking(self) -> None:
         self.codec = ABICodec(build_strict_registry())
+
+    def enable_async(self, async_modules=None):
+        if async_modules is None:
+            async_modules = get_default_async_modules()
+        attach_modules(self, async_modules)
