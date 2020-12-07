@@ -79,26 +79,26 @@ class Module:
     def __init__(self, web3: "Web3") -> None:
         self.web3 = web3
 
-    @classmethod
-    def attach(cls, target: "Web3", module_name: Optional[str] = None) -> None:
-        if not module_name:
-            module_name = cls.__name__.lower()
+    # @classmethod
+    # def attach(cls, target: "Web3", module_name: Optional[str] = None) -> None:
+    #     if not module_name:
+    #         module_name = cls.__name__.lower()
 
-        if hasattr(target, module_name):
-            raise AttributeError(
-                "Cannot set {0} module named '{1}'.  The web3 object "
-                "already has an attribute with that name".format(
-                    target,
-                    module_name,
-                )
-            )
+    #     if hasattr(target, module_name):
+    #         raise AttributeError(
+    #             "Cannot set {0} module named '{1}'.  The web3 object "
+    #             "already has an attribute with that name".format(
+    #                 target,
+    #                 module_name,
+    #             )
+    #         )
 
-        if isinstance(target, Module):
-            web3 = target.web3
-        else:
-            web3 = target
+    #     if isinstance(target, Module):
+    #         web3 = target.web3
+    #     else:
+    #         web3 = target
 
-        setattr(target, module_name, cls(web3))
+    #     setattr(target, module_name, cls(web3))
 
 
 #  Module should no longer have access to the full web3 api.
