@@ -15,7 +15,7 @@ T = TypeVar("T")
 def attach_modules(parent_module: T, module_definitions: Dict[str, Sequence[Any]]) -> None:
     for module_name, module_info in module_definitions.items():
         module_class = module_info[0]
-        module_class.attach(parent_module, module_name)
+        module_class.setattr(parent_module, module_name)
 
         if len(module_info) == 2:
             submodule_definitions = module_info[1]

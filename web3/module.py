@@ -105,7 +105,7 @@ class Module:
 #  Only the calling functions need access to the request methods.
 #  Any "re-entrant" shinanigans can go in the middlewares, which do
 #  have web3 access.
-class ModuleV2(Module):
+class ModuleV2:
     is_async = False
 
     def __init__(self, web3: "Web3") -> None:

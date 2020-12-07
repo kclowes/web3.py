@@ -78,7 +78,6 @@ from web3.method import (
     default_root_munger,
 )
 from web3.module import (
-    Module,
     ModuleV2,
 )
 from web3.types import (
@@ -101,7 +100,7 @@ from web3.types import (
 )
 
 
-class Eth(ModuleV2, Module):
+class Eth(ModuleV2):
     account = Account()
     defaultAccount = empty
     defaultBlock: Literal["latest"] = "latest"  # noqa: E704

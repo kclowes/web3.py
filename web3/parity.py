@@ -81,7 +81,7 @@ class ParityPersonal(ModuleV2):
     unlockAccount = unlockAccount
 
 
-class Parity(Module):
+class Parity(ModuleV2):
     """
     https://paritytech.github.io/wiki/JSONRPC-parity-module
     """

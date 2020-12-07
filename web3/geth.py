@@ -137,6 +137,6 @@ class GethMiner(ModuleV2):
     stopAutoDag = stopAutoDag
 
 
-class Geth(Module):
+class Geth(ModuleV2):
     personal: GethPersonal
     admin: GethAdmin
