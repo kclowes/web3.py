@@ -23,7 +23,8 @@ from web3.providers.eth_tester import (
 
 
 class Foo(ModuleV2):
-    pass
+    def foo_fn(self):
+        return 'foo_fn'
 
 
 class Bar(ModuleV2):
@@ -33,6 +34,11 @@ class Bar(ModuleV2):
 class Baa(ModuleV2):
     def does_something(self):
         return 'passed'
+
+
+class Baz(ModuleV2):
+    def does_something_else(self):
+        return 'something else'
 # modules = {
 #     "eth": (Eth,),
 #     "net": (Net,),
@@ -54,10 +60,13 @@ def test_attach_modules():
     mods = {
         "foo": (Foo, {
             "bar": (Bar, {
-                "baa": (Baa,),
+                "baa": (Baa, {
+                    "baz": (Baz,),
+                }),
             }),
         }),
     }
     w3 = Web3(EthereumTesterProvider, modules={})
     attach_modules(w3, mods)
     assert w3.foo.bar.baa.does_something() == 'passed'
+    assert w3.foo.bar.baa.baz.does_something_else() == 'something else'
