@@ -62,14 +62,16 @@ def test_attach_modules():
             "bar": (Bar, {
                 "baa": (Baa, {
                     "baz": (Baz,),
+                    "foo": (Foo,),
                 }),
             }),
         }),
     }
-    w3 = Web3(EthereumTesterProvider, modules={})
+    w3 = Web3(EthereumTesterProvider(), modules={})
     attach_modules(w3, mods)
     assert w3.foo.bar.baa.does_something() == 'passed'
     assert w3.foo.bar.baa.baz.does_something_else() == 'something else'
+    assert w3.foo.bar.baa.foo.foo_fn() == 'foo_fn'
 
 
 def test_attach_modules_with_wrong_module_format():
