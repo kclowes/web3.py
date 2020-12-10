@@ -1,6 +1,8 @@
 from typing import (
+    TYPE_CHECKING,
     Any,
     Dict,
+    Optional,
     Sequence,
     TypeVar,
 )
@@ -11,15 +13,24 @@ from web3.exceptions import (
 
 T = TypeVar("T")
 
+if TYPE_CHECKING:
+    from web3 import Web3  # noqa: F401
+
 
 def attach_modules(
     parent_module: T,
     module_definitions: Dict[str, Sequence[Any]],
-    web3=None
+    web3: Optional[T] = None
 ) -> None:
     for module_name, module_info in module_definitions.items():
         module_class = module_info[0]
-        # module_class.attach(parent_module, module_name)
+
+        if hasattr(parent_module, module_name):
+            raise AttributeError(
+                f"Cannot set {parent_module} module named '{module_name}'.  The web3 object "
+                "already has an attribute with that name"
+            )
+
         if web3 is None:
             setattr(parent_module, module_name, module_class(parent_module))
             web3 = parent_module

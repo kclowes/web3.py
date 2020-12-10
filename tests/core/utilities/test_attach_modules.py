@@ -70,3 +70,22 @@ def test_attach_modules():
     attach_modules(w3, mods)
     assert w3.foo.bar.baa.does_something() == 'passed'
     assert w3.foo.bar.baa.baz.does_something_else() == 'something else'
+
+
+def test_attach_modules_with_wrong_module_format():
+    mods = {
+        "foo": (Foo, Bar, Baz)
+    }
+    w3 = Web3(EthereumTesterProvider, modules={})
+    with pytest.raises(ValidationError, match="Module definitions can only have 1 or 2 elements"):
+        attach_modules(w3, mods)
+
+
+def test_attach_modules_with_existing_modules():
+    mods = {
+        "foo": (Foo,),
+    }
+    w3 = Web3(EthereumTesterProvider, modules=mods)
+    with pytest.raises(AttributeError,
+                       match="The web3 object already has an attribute with that name"):
+        attach_modules(w3, mods)

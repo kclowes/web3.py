@@ -56,7 +56,6 @@ from web3._utils.txpool import (
     status,
 )
 from web3.module import (
-    Module,
     ModuleV2,
 )
 

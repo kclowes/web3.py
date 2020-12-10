@@ -3,7 +3,6 @@ from typing import (
     Any,
     Callable,
     Coroutine,
-    Optional,
     TypeVar,
     Union,
 )
