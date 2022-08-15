@@ -1,4 +1,3 @@
-
 import pytest
 
 from aiohttp import (
@@ -19,4 +18,4 @@ async def test_user_provided_session() -> None:
     session = ClientSession()
     provider = AsyncHTTPProvider(endpoint_uri="http://mynode.local:8545")
     await provider.cache_async_session(session)
-    assert len(request._async_session_cache) == 1
+    assert len(request._async_session_cache()) == 1
