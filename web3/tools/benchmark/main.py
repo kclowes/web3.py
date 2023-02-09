@@ -11,6 +11,7 @@ from typing import (
     Callable,
     Dict,
     Union,
+    cast,
 )
 
 from eth_typing import (
@@ -126,7 +127,8 @@ def unlocked_account(w3: "Web3") -> ChecksumAddress:
 
 async def async_unlocked_account(w3: Web3, w3_eth: AsyncEth) -> ChecksumAddress:
     coinbase = await w3_eth.coinbase
-    await w3.geth.personal.unlock_account(coinbase, KEYFILE_PW)
+    geth_personal: AsyncGethPersonal = w3.geth.personal
+    await geth_personal.unlock_account(coinbase, KEYFILE_PW)
     return coinbase
 
 
@@ -135,14 +137,9 @@ def main(logger: logging.Logger, num_calls: int) -> None:
     for built_fixture in fixture.build():
         for process in built_fixture:
             w3_http = build_web3_http(fixture.endpoint_uri)
-            loop = asyncio.get_event_loop()
-            async_w3_http = loop.run_until_complete(
-                build_async_w3_http(fixture.endpoint_uri)
-            )
-            reveal_type(async_w3_http.eth)
-            reveal_type(async_w3_http.geth)
-            async_unlocked_acct = loop.run_until_complete(
-                async_unlocked_account(async_w3_http, async_w3_http.eth)
+            async_w3_http = asyncio.run(build_async_w3_http(fixture.endpoint_uri))
+            async_unlocked_acct = asyncio.run(
+                async_unlocked_account(async_w3_http, cast(AsyncEth, async_w3_http.eth))
             )
 
             methods = [
@@ -191,7 +188,7 @@ def main(logger: logging.Logger, num_calls: int) -> None:
                     method["exec"],
                     num_calls,
                 )
-                outcomes["AsyncHTTPProvider"] = loop.run_until_complete(
+                outcomes["AsyncHTTPProvider"] = asyncio.run(
                     async_benchmark(method["async_exec"], num_calls)
                 )
                 print_entry(logger, outcomes)
