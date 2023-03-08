@@ -369,7 +369,10 @@ class Web3:
 
     @deprecated_for("is_connected")
     def isConnected(self) -> bool:
-        return self.provider.isConnected()
+        return self.isConnected()
+
+    def is_connected(self) -> bool:
+        return self.provider.is_connected()
 
     def is_encodable(self, _type: TypeStr, value: Any) -> bool:
         return self.codec.is_encodable(_type, value)
