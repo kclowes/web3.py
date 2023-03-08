@@ -137,15 +137,21 @@ def get_default_modules() -> Dict[str, Union[Type[Module], Sequence[Any]]]:
         "eth": Eth,
         "net": Net,
         "version": Version,
-        "parity": (Parity, {
-            "personal": ParityPersonal,
-        }),
-        "geth": (Geth, {
-            "admin": GethAdmin,
-            "miner": GethMiner,
-            "personal": GethPersonal,
-            "txpool": GethTxPool,
-        }),
+        "parity": (
+            Parity,
+            {
+                "personal": ParityPersonal,
+            },
+        ),
+        "geth": (
+            Geth,
+            {
+                "admin": GethAdmin,
+                "miner": GethMiner,
+                "personal": GethPersonal,
+                "txpool": GethTxPool,
+            },
+        ),
         "testing": Testing,
     }
 
@@ -167,6 +173,7 @@ class Web3:
     # Encoding and Decoding
     @staticmethod
     @wraps(to_bytes)
+    @deprecated_for("to_bytes")
     def toBytes(
         primitive: Primitives = None, hexstr: HexStr = None, text: str = None
     ) -> bytes:
@@ -174,6 +181,7 @@ class Web3:
 
     @staticmethod
     @wraps(to_int)
+    @deprecated_for("to_int")
     def toInt(
         primitive: Primitives = None, hexstr: HexStr = None, text: str = None
     ) -> int:
@@ -181,6 +189,7 @@ class Web3:
 
     @staticmethod
     @wraps(to_hex)
+    @deprecated_for("to_hex")
     def toHex(
         primitive: Primitives = None, hexstr: HexStr = None, text: str = None
     ) -> HexStr:
@@ -188,6 +197,7 @@ class Web3:
 
     @staticmethod
     @wraps(to_text)
+    @deprecated_for("to_text")
     def toText(
         primitive: Primitives = None, hexstr: HexStr = None, text: str = None
     ) -> str:
@@ -195,33 +205,39 @@ class Web3:
 
     @staticmethod
     @wraps(to_json)
+    @deprecated_for("to_json")
     def toJSON(obj: Dict[Any, Any]) -> str:
         return to_json(obj)
 
     # Currency Utility
     @staticmethod
     @wraps(to_wei)
+    @deprecated_for("to_wei")
     def toWei(number: Union[int, float, str, decimal.Decimal], unit: str) -> Wei:
         return cast(Wei, to_wei(number, unit))
 
     @staticmethod
     @wraps(from_wei)
+    @deprecated_for("from_wei")
     def fromWei(number: int, unit: str) -> Union[int, decimal.Decimal]:
         return from_wei(number, unit)
 
     # Address Utility
     @staticmethod
     @wraps(is_address)
+    @deprecated_for("is_address")
     def isAddress(value: Any) -> bool:
         return is_address(value)
 
     @staticmethod
     @wraps(is_checksum_address)
+    @deprecated_for("is_checksum_address")
     def isChecksumAddress(value: Any) -> bool:
         return is_checksum_address(value)
 
     @staticmethod
     @wraps(to_checksum_address)
+    @deprecated_for("to_checksum_address")
     def toChecksumAddress(value: Union[AnyAddress, str, bytes]) -> ChecksumAddress:
         return to_checksum_address(value)
 
@@ -237,8 +253,10 @@ class Web3:
         provider: Optional[BaseProvider] = None,
         middlewares: Optional[Sequence[Any]] = None,
         modules: Optional[Dict[str, Union[Type[Module], Sequence[Any]]]] = None,
-        external_modules: Optional[Dict[str, Union[Type[Module], Sequence[Any]]]] = None,
-        ens: ENS = cast(ENS, empty)
+        external_modules: Optional[
+            Dict[str, Union[Type[Module], Sequence[Any]]]
+        ] = None,
+        ens: ENS = cast(ENS, empty),
     ) -> None:
         self.manager = self.RequestManager(self, provider, middlewares)
         # this codec gets used in the module initialization,
@@ -268,25 +286,33 @@ class Web3:
         self.manager.provider = provider
 
     @property
+    @deprecated_for("client_version")
     def clientVersion(self) -> str:
         return self.manager.request_blocking(RPC.web3_clientVersion, [])
 
     @property
     def api(self) -> str:
         from web3 import __version__
+
         return __version__
 
     @staticmethod
     @deprecated_for("keccak")
     @apply_to_return_value(HexBytes)
-    def sha3(primitive: Optional[Primitives] = None, text: Optional[str] = None,
-             hexstr: Optional[HexStr] = None) -> bytes:
+    def sha3(
+        primitive: Optional[Primitives] = None,
+        text: Optional[str] = None,
+        hexstr: Optional[HexStr] = None,
+    ) -> bytes:
         return Web3.keccak(primitive, text, hexstr)
 
     @staticmethod
     @apply_to_return_value(HexBytes)
-    def keccak(primitive: Optional[Primitives] = None, text: Optional[str] = None,
-               hexstr: Optional[HexStr] = None) -> bytes:
+    def keccak(
+        primitive: Optional[Primitives] = None,
+        text: Optional[str] = None,
+        hexstr: Optional[HexStr] = None,
+    ) -> bytes:
         if isinstance(primitive, (bytes, int, type(None))):
             input_bytes = to_bytes(primitive, hexstr=hexstr, text=text)
             return eth_utils_keccak(input_bytes)
@@ -294,10 +320,8 @@ class Web3:
         raise TypeError(
             "You called keccak with first arg %r and keywords %r. You must call it with one of "
             "these approaches: keccak(text='txt'), keccak(hexstr='0x747874'), "
-            "keccak(b'\\x74\\x78\\x74'), or keccak(0x747874)." % (
-                primitive,
-                {'text': text, 'hexstr': hexstr}
-            )
+            "keccak(b'\\x74\\x78\\x74'), or keccak(0x747874)."
+            % (primitive, {"text": text, "hexstr": hexstr})
         )
 
     @combomethod
@@ -306,6 +330,7 @@ class Web3:
         return cls.solidityKeccak(abi_types, values)
 
     @combomethod
+    @deprecated_for("solidity_keccak")
     def solidityKeccak(cls, abi_types: List[TypeStr], values: List[Any]) -> bytes:
         """
         Executes keccak256 exactly as Solidity does.
@@ -324,11 +349,14 @@ class Web3:
             w3 = cls
         normalized_values = map_abi_data([abi_ens_resolver(w3)], abi_types, values)
 
-        hex_string = add_0x_prefix(HexStr(''.join(
-            remove_0x_prefix(hex_encode_abi_type(abi_type, value))
-            for abi_type, value
-            in zip(abi_types, normalized_values)
-        )))
+        hex_string = add_0x_prefix(
+            HexStr(
+                "".join(
+                    remove_0x_prefix(hex_encode_abi_type(abi_type, value))
+                    for abi_type, value in zip(abi_types, normalized_values)
+                )
+            )
+        )
         return cls.keccak(hexstr=hex_string)
 
     def attach_modules(
@@ -339,6 +367,7 @@ class Web3:
         """
         _attach_modules(self, modules)
 
+    @deprecated_for("is_connected")
     def isConnected(self) -> bool:
         return self.provider.isConnected()
 
@@ -358,7 +387,7 @@ class Web3:
 
     @property
     def pm(self) -> "PM":
-        if hasattr(self, '_pm'):
+        if hasattr(self, "_pm"):
             # ignored b/c property is dynamically set via enable_unstable_package_management_api
             return self._pm  # type: ignore
         else:
@@ -370,8 +399,9 @@ class Web3:
 
     def enable_unstable_package_management_api(self) -> None:
         from web3.pm import PM  # noqa: F811
-        if not hasattr(self, '_pm'):
-            self.attach_modules({'_pm': PM})
+
+        if not hasattr(self, "_pm"):
+            self.attach_modules({"_pm": PM})
 
     def enable_strict_bytes_type_checking(self) -> None:
         self.codec = ABICodec(build_strict_registry())
