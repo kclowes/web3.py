@@ -36,7 +36,7 @@ async def jsonrpc_ipc_pipe_path():
 
 async def test_ipc_no_path():
     """
-    IPCProvider.is_connected() returns False when no path is supplied
+    AsyncIPCProvider.is_connected() returns False when no path is supplied
     """
     ipc = AsyncIPCProvider(None)
     assert ipc.is_connected() is False
@@ -84,7 +84,7 @@ async def serve_empty_result(simple_ipc_server):
         await task
 
 
-async def test_sync_waits_for_full_result(jsonrpc_ipc_pipe_path, serve_empty_result):
+async def test_async_waits_for_full_result(jsonrpc_ipc_pipe_path, serve_empty_result):
     provider = AsyncIPCProvider(pathlib.Path(jsonrpc_ipc_pipe_path), timeout=3)
     result = await provider.make_request("method", [])
     assert result == {"id": 1, "result": {}}

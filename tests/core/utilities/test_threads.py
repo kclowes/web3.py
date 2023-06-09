@@ -1,3 +1,5 @@
+import asyncio
+
 import pytest
 import time
 
@@ -105,3 +107,18 @@ def test_with_custom_exception_instance():
         timeout.check()
 
     assert err.value is exc
+
+
+@pytest.mark.asyncio
+async def test_async_contextmanager_completion_before_timeout():
+    async with Timeout(0.01) as timeout:
+        timeout.check()
+    await asyncio.sleep(0.02)
+
+
+@pytest.mark.asyncio
+async def test_async_contextmanager_timeout():
+    with pytest.raises(Timeout):
+        async with Timeout(0.01) as timeout:
+            await asyncio.sleep(0.02)
+            timeout.check()
