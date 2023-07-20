@@ -63,10 +63,9 @@ class Timeout(Exception):
         self,
         exc_type: Type[BaseException],
         exc_val: BaseException,
-        exc_tb: TracebackType
+        exc_tb: TracebackType,
     ) -> Literal[False]:
         return False
-
 
     def __str__(self) -> str:
         if self.seconds is None:

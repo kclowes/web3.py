@@ -50,6 +50,7 @@ from .filter import (
 )
 from .fixture import (
     async_construct_error_generator_middleware,
+    async_construct_fixture_middleware,
     async_construct_result_generator_middleware,
     construct_error_generator_middleware,
     construct_fixture_middleware,

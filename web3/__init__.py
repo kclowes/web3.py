@@ -8,6 +8,9 @@ from web3.main import (
 from web3.providers.async_rpc import (  # noqa: E402
     AsyncHTTPProvider,
 )
+from web3.providers.async_ipc import (  # noqa: E402
+    AsyncIPCProvider,
+)
 from web3.providers.eth_tester import (  # noqa: E402
     EthereumTesterProvider,
 )
@@ -35,4 +38,5 @@ __all__ = [
     "EthereumTesterProvider",
     "Account",
     "AsyncHTTPProvider",
+    "AsyncIPCProvider",
 ]
