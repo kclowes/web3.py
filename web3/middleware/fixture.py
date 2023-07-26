@@ -108,7 +108,9 @@ def construct_error_generator_middleware(
 # --- async --- #
 
 
-async def async_construct_fixture_middleware(fixtures: Dict[RPCEndpoint, Any]) -> Middleware:
+async def async_construct_fixture_middleware(
+    fixtures: Dict[RPCEndpoint, Any]
+) -> Middleware:
     """
     Constructs a middleware which returns a static response for any method
     which is found in the provided fixtures.

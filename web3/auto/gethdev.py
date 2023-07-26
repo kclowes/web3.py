@@ -5,8 +5,8 @@ from web3 import (
     Web3,
 )
 from web3.middleware import (
-    geth_poa_middleware,
     async_geth_poa_middleware,
+    geth_poa_middleware,
 )
 from web3.providers.ipc import (
     get_dev_ipc_path,

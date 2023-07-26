@@ -1,25 +1,22 @@
 import asyncio
 import os
 import pathlib
+import pytest
 import socket
 import tempfile
 import uuid
 
-import pytest
-
-from web3.exceptions import (
-    ProviderConnectionError
-)
-from web3.providers.async_ipc import (
-    AsyncIPCProvider
-)
-
 from web3.auto.gethdev import (
     async_w3,
 )
-
+from web3.exceptions import (
+    ProviderConnectionError,
+)
 from web3.middleware import (
     async_construct_fixture_middleware,
+)
+from web3.providers.async_ipc import (
+    AsyncIPCProvider,
 )
 
 
@@ -66,7 +63,9 @@ def simple_ipc_server(jsonrpc_ipc_pipe_path):
 @pytest.mark.asyncio
 async def serve_empty_result(simple_ipc_server):
     async def reply():
-        connection, client_address = await asyncio.wait_for(asyncio.create_task(simple_ipc_server.accept()), 1)
+        connection, client_address = await asyncio.wait_for(
+            asyncio.create_task(simple_ipc_server.accept()), 1
+        )
         try:
             await asyncio.wait_for(connection.recv(1024), 1)
             connection.sendall(b'{"id":1, "result": {}')
@@ -86,6 +85,7 @@ async def serve_empty_result(simple_ipc_server):
         await task
 
 
+@pytest.mark.asyncio
 async def test_async_waits_for_full_result(jsonrpc_ipc_pipe_path, serve_empty_result):
     provider = AsyncIPCProvider(pathlib.Path(jsonrpc_ipc_pipe_path), timeout=3)
     result = await provider.make_request("method", [])

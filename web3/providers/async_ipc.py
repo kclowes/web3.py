@@ -47,11 +47,7 @@ async def async_get_ipc_socket(ipc_path: str, timeout: float = 2.0) -> socket.so
 
         return NamedPipe(ipc_path)
     else:
-        reader, writer = await asyncio.open_connection(ipc_path)
-        writer.write_eof()
-        sock = writer.get_extra_info("socket")
-        sock.settimeout(timeout)
-        return sock
+        return await asyncio.open_unix_connection(ipc_path)
 
 
 class PersistantSocket:
@@ -88,7 +84,9 @@ class PersistantSocket:
         return await async_get_ipc_socket(self.ipc_path)
 
     async def reset(self) -> socket.socket:
-        self.sock.close()
+        reader, writer = self.sock
+        writer.close()
+        await writer.wait_closed()
         self.sock = await self._open()
         return self.sock
 
@@ -126,33 +124,36 @@ class AsyncIPCProvider(AsyncJSONBaseProvider):
         )
         request = self.encode_rpc_request(method, params)
 
-        # potentially missing a lock here
+        # missing a lock here
         async with self._socket as sock:
+            reader, writer = sock
             try:
-                sock.sendall(request)
+                writer.write(request)
+                await writer.drain()
             except BrokenPipeError:
                 # one extra attempt, then give up
                 sock = self._socket.reset()
-                sock.sendall(request)
+                writer.write(request)
+                await writer.drain()
+
 
             raw_response = b""
-            async with asyncio.timeout(self.timeout) as timeout:
-                while True:
+            while True:
+                try:
+                    raw_response += await reader.read(4096)
+                except socket.timeout:
+                    await asyncio.sleep(0)
+                    continue
+                if raw_response == b"":
+                    await asyncio.sleep(0)
+                elif has_valid_json_rpc_ending(raw_response):
                     try:
-                        raw_response += await sock.sock_recv(sock, 4096)
-                    except socket.timeout:
+                        response = self.decode_rpc_response(raw_response)
+                    except JSONDecodeError:
                         await asyncio.sleep(0)
                         continue
-                    if raw_response == b"":
-                        await timeout.async_sleep(0)
-                    elif has_valid_json_rpc_ending(raw_response):
-                        try:
-                            response = self.decode_rpc_response(raw_response)
-                        except JSONDecodeError:
-                            await timeout.async_sleep(0)
-                            continue
-                        else:
-                            return response
                     else:
-                        await timeout.async_sleep(0)
-                        continue
+                        return response
+                else:
+                    await asyncio.sleep(0)
+                    continue
