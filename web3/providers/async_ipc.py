@@ -124,7 +124,7 @@ class AsyncIPCProvider(AsyncJSONBaseProvider):
         )
         request = self.encode_rpc_request(method, params)
 
-        # missing a lock here
+        # TODO - lock missing
         async with self._socket as sock:
             reader, writer = sock
             try:
@@ -135,7 +135,6 @@ class AsyncIPCProvider(AsyncJSONBaseProvider):
                 sock = self._socket.reset()
                 writer.write(request)
                 await writer.drain()
-
 
             raw_response = b""
             while True:

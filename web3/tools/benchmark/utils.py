@@ -23,6 +23,17 @@ def wait_for_socket(ipc_path: str, timeout: int = 30) -> None:
             break
 
 
+async def wait_for_async_socket(ipc_path: str, timeout: int = 30) -> None:
+    start = time.time()
+    while time.time() < start + timeout:
+        try:
+            await asyncio.open_unix_connection(ipc_path)
+        except (FileNotFoundError, socket.error):
+            time.sleep(0.01)
+        else:
+            break
+
+
 def wait_for_http(endpoint_uri: str, timeout: int = 60) -> None:
     start = time.time()
     while time.time() < start + timeout:
