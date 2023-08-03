@@ -124,7 +124,8 @@ async def async_benchmark(func: Callable[..., Any], n: int) -> Union[float, str]
             await result
         execution_time = timeit.default_timer() - starttime
         return execution_time
-    except Exception:
+    except Exception as e:
+        print(e)
         return "N/A"
 
 
