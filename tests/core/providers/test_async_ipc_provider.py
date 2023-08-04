@@ -90,7 +90,10 @@ async def test_async_waits_for_full_result(jsonrpc_ipc_pipe_path, serve_empty_re
     provider = AsyncIPCProvider(pathlib.Path(jsonrpc_ipc_pipe_path), timeout=3)
     result = await provider.make_request("method", [])
     assert result == {"id": 1, "result": {}}
-    provider._socket.sock.close()
+    sock = provider._socket
+    reader, writer = sock
+    writer.close()
+    await writer.wait_closed()
 
 
 @pytest.mark.asyncio

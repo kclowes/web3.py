@@ -121,8 +121,6 @@ class AsyncIPCProvider(AsyncJSONBaseProvider):
 
         self.timeout = timeout
         self._thread_pool = ThreadPoolExecutor(max_workers=1)
-        self._lock = threading.Lock()
-        # self._lock = async_lock(self._thread_pool, threading.Lock())
         self._socket = PersistantSocket(self.ipc_path)
         super().__init__()
 
