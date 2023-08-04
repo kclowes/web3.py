@@ -94,6 +94,7 @@ async def build_async_w3_http(endpoint_uri: str) -> AsyncWeb3:
     )
     return _w3
 
+
 async def build_async_w3_ipc(endpoint_uri: str) -> AsyncWeb3:
     await wait_for_async_socket(endpoint_uri)
     _w3 = AsyncWeb3(
@@ -101,6 +102,7 @@ async def build_async_w3_ipc(endpoint_uri: str) -> AsyncWeb3:
         middlewares=[async_gas_price_strategy_middleware],
     )
     return _w3
+
 
 def sync_benchmark(func: Callable[..., Any], n: int) -> Union[float, str]:
     try:

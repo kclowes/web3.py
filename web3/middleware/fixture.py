@@ -118,7 +118,7 @@ async def async_construct_fixture_middleware(
 
     async def fixture_middleware(
         make_request: Callable[[RPCEndpoint, Any], Any], _: "Web3"
-    ) -> Callable[[RPCEndpoint, Any], RPCResponse]:
+    ) -> AsyncMiddlewareCoroutine:
         async def middleware(method: RPCEndpoint, params: Any) -> RPCResponse:
             if method in fixtures:
                 result = fixtures[method]

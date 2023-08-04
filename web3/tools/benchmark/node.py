@@ -11,6 +11,7 @@ from tempfile import (
 from typing import (
     Any,
     Generator,
+    Optional,
     Sequence,
 )
 import zipfile
@@ -35,7 +36,7 @@ class GethBenchmarkFixture:
         self.rpc_port = self._rpc_port()
         self.endpoint_uri = self._endpoint_uri()
         self.geth_binary = self._geth_binary()
-        self.ipc_endpoint = None
+        self.ipc_endpoint: Optional[str] = None
 
     def build(self) -> Generator[Any, None, None]:
         with TemporaryDirectory() as base_dir:

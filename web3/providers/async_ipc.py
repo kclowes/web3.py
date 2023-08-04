@@ -17,6 +17,8 @@ from types import (
 )
 from typing import (
     Any,
+    Optional,
+    Tuple,
     Type,
     Union,
 )
@@ -38,7 +40,9 @@ from .ipc import (
 )
 
 
-async def async_get_ipc_socket(ipc_path: str, timeout: float = 2.0) -> socket.socket:
+async def async_get_ipc_socket(
+    ipc_path: str, timeout: float = 2.0
+) -> Tuple[asyncio.StreamReader, asyncio.StreamWriter]:
     if sys.platform == "win32":
         # On Windows named pipe is used. Simulate socket with it.
         from web3._utils.windows import (
@@ -51,12 +55,12 @@ async def async_get_ipc_socket(ipc_path: str, timeout: float = 2.0) -> socket.so
 
 
 class PersistantSocket:
-    sock = None
+    sock: Optional[Tuple[asyncio.StreamReader, asyncio.StreamWriter]] = None
 
     def __init__(self, ipc_path: str) -> None:
         self.ipc_path = ipc_path
 
-    async def __aenter__(self) -> socket.socket:
+    async def __aenter__(self) -> Tuple[asyncio.StreamReader, asyncio.StreamWriter]:
         if not self.ipc_path:
             raise FileNotFoundError(
                 f"cannot connect to IPC socket at path: {self.ipc_path!r}"
@@ -75,15 +79,17 @@ class PersistantSocket:
         # only close the socket if there was an error
         if exc_value is not None:
             try:
-                self.sock.close()
+                reader, writer = self.sock
+                writer.close()
+                await writer.wait_closed()
             except Exception:
                 pass
             self.sock = None
 
-    async def _open(self) -> socket.socket:
+    async def _open(self) -> Tuple[asyncio.StreamReader, asyncio.StreamWriter]:
         return await async_get_ipc_socket(self.ipc_path)
 
-    async def reset(self) -> socket.socket:
+    async def reset(self) -> Tuple[asyncio.StreamReader, asyncio.StreamWriter]:
         reader, writer = self.sock
         writer.close()
         await writer.wait_closed()
@@ -93,6 +99,7 @@ class PersistantSocket:
 
 _async_session_cache_lock = threading.Lock()
 _async_session_pool = ThreadPoolExecutor(max_workers=1)
+
 
 class AsyncIPCProvider(AsyncJSONBaseProvider):
     logger = logging.getLogger("web3.providers.AsyncIPCProvider")
@@ -135,14 +142,17 @@ class AsyncIPCProvider(AsyncJSONBaseProvider):
                 await writer.drain()
             except BrokenPipeError:
                 # one extra attempt, then give up
-                sock = self._socket.reset()
+                new_sock = await self._socket.reset()
+                reader, writer = new_sock
                 writer.write(request)
                 await writer.drain()
 
             raw_response = b""
             while True:
                 try:
-                    async with async_lock(_async_session_pool, _async_session_cache_lock):
+                    async with async_lock(
+                        _async_session_pool, _async_session_cache_lock
+                    ):
                         raw_response += await reader.readline()
                 except socket.timeout:
                     await asyncio.sleep(0)
