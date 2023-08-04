@@ -78,7 +78,7 @@ def build_web3_ipc(endpoint_uri: str) -> Web3:
     wait_for_socket(endpoint_uri)
     _w3 = Web3(
         IPCProvider(endpoint_uri),
-        middlewares=[gas_price_strategy_middleware, buffered_gas_estimate_middleware],
+        middlewares=[gas_price_strategy_middleware],
     )
     return _w3
 
@@ -98,10 +98,7 @@ async def build_async_w3_ipc(endpoint_uri: str) -> AsyncWeb3:
     await wait_for_async_socket(endpoint_uri)
     _w3 = AsyncWeb3(
         AsyncIPCProvider(endpoint_uri),
-        middlewares=[
-            async_gas_price_strategy_middleware,
-            async_buffered_gas_estimate_middleware,
-        ],
+        middlewares=[async_gas_price_strategy_middleware],
     )
     return _w3
 
