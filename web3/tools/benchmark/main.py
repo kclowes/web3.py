@@ -169,38 +169,38 @@ def main(logger: logging.Logger, num_calls: int) -> None:
                     "ipc": lambda: w3_ipc.eth.gas_price,
                     "async_ipc": lambda: async_w3_ipc.eth.gas_price,
                 },
-                {
-                    "name": "eth_sendTransaction",
-                    "params": {},
-                    "exec": lambda: w3_http.eth.send_transaction(
-                        {
-                            "to": "0xd3CdA913deB6f67967B99D67aCDFa1712C293601",
-                            "from": unlocked_account(w3_http),
-                            "value": Wei(12345),
-                        }
-                    ),
-                    "async_exec": lambda: async_w3_http.eth.send_transaction(
-                        {
-                            "to": "0xd3CdA913deB6f67967B99D67aCDFa1712C293601",
-                            "from": async_unlocked_acct,
-                            "value": Wei(12345),
-                        }
-                    ),
-                    "ipc": lambda: w3_ipc.eth.send_transaction(
-                        {
-                            "to": "0xd3CdA913deB6f67967B99D67aCDFa1712C293601",
-                            "from": unlocked_account(w3_http),
-                            "value": Wei(12345),
-                        }
-                    ),
-                    "async_ipc": lambda: async_w3_ipc.eth.send_transaction(
-                        {
-                            "to": "0xd3CdA913deB6f67967B99D67aCDFa1712C293601",
-                            "from": async_unlocked_acct,
-                            "value": Wei(12345),
-                        }
-                    ),
-                },
+                # {
+                #     "name": "eth_sendTransaction",
+                #     "params": {},
+                #     "exec": lambda: w3_http.eth.send_transaction(
+                #         {
+                #             "to": "0xd3CdA913deB6f67967B99D67aCDFa1712C293601",
+                #             "from": unlocked_account(w3_http),
+                #             "value": Wei(12345),
+                #         }
+                #     ),
+                #     "async_exec": lambda: async_w3_http.eth.send_transaction(
+                #         {
+                #             "to": "0xd3CdA913deB6f67967B99D67aCDFa1712C293601",
+                #             "from": async_unlocked_acct,
+                #             "value": Wei(12345),
+                #         }
+                #     ),
+                #     "ipc": lambda: w3_ipc.eth.send_transaction(
+                #         {
+                #             "to": "0xd3CdA913deB6f67967B99D67aCDFa1712C293601",
+                #             "from": unlocked_account(w3_http),
+                #             "value": Wei(12345),
+                #         }
+                #     ),
+                #     "async_ipc": lambda: async_w3_ipc.eth.send_transaction(
+                #         {
+                #             "to": "0xd3CdA913deB6f67967B99D67aCDFa1712C293601",
+                #             "from": async_unlocked_acct,
+                #             "value": Wei(12345),
+                #         }
+                #     ),
+                # },
                 {
                     "name": "eth_blockNumber",
                     "params": {},

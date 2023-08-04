@@ -9,7 +9,6 @@ import logging
 from pathlib import (
     Path,
 )
-import socket
 import sys
 import threading
 from types import (
@@ -120,7 +119,6 @@ class AsyncIPCProvider(AsyncJSONBaseProvider):
             raise TypeError("ipc_path must be of type string or pathlib.Path")
 
         self.timeout = timeout
-        self._thread_pool = ThreadPoolExecutor(max_workers=1)
         self._socket = PersistantSocket(self.ipc_path)
         super().__init__()
 
@@ -147,14 +145,10 @@ class AsyncIPCProvider(AsyncJSONBaseProvider):
 
             raw_response = b""
             while True:
-                try:
-                    async with async_lock(
-                        _async_session_pool, _async_session_cache_lock
-                    ):
-                        raw_response += await reader.readline()
-                except socket.timeout:
-                    await asyncio.sleep(0)
-                    continue
+                async with async_lock(
+                    _async_session_pool, _async_session_cache_lock
+                ):
+                    raw_response += await reader.readline()
                 if raw_response == b"":
                     await asyncio.sleep(0)
                 elif has_valid_json_rpc_ending(raw_response):
