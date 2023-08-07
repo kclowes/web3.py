@@ -70,7 +70,7 @@ async def serve_empty_result(simple_ipc_server):
             await asyncio.wait_for(connection.recv(1024), 1)
             connection.sendall(b'{"id":1, "result": {}')
             await asyncio.sleep(0.1)
-            connection.sendall(b"}")
+            connection.sendall(b"}\n")
         finally:
             # Clean up the connection
             connection.close()
