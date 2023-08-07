@@ -87,7 +87,6 @@ async def serve_empty_result(simple_ipc_server):
 
 @pytest.mark.asyncio
 async def test_async_waits_for_full_result(jsonrpc_ipc_pipe_path, serve_empty_result):
-    pytest.xfail()
     provider = AsyncIPCProvider(pathlib.Path(jsonrpc_ipc_pipe_path), timeout=3)
     result = await provider.make_request("method", [])
     assert result == {"id": 1, "result": {}}
