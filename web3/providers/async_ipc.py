@@ -146,7 +146,7 @@ class AsyncIPCProvider(AsyncJSONBaseProvider):
             raw_response = b""
             while True:
                 async with async_lock(_async_session_pool, _async_session_cache_lock):
-                    raw_response += await reader.readline()
+                    raw_response += await reader.read(4096)
                 if raw_response == b"":
                     await asyncio.sleep(0)
                 elif has_valid_json_rpc_ending(raw_response):
