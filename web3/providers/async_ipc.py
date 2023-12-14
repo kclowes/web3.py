@@ -25,9 +25,6 @@ from typing import (
 from web3._utils.async_caching import (
     async_lock,
 )
-from web3._utils.threads import (
-    Timeout,
-)
 from web3.types import (
     RPCEndpoint,
     RPCResponse,
@@ -147,13 +144,14 @@ class AsyncIPCProvider(AsyncJSONBaseProvider):
                 await writer.drain()
 
             raw_response = b""
-            async with asyncio.timeout(self.timeout) as timeout:
+            async with asyncio.timeout(self.timeout):
                 while True:
-                    async with async_lock(_async_session_pool, _async_session_cache_lock):
+                    async with async_lock(
+                        _async_session_pool, _async_session_cache_lock
+                    ):
                         try:
-                            raw_response += await reader.read(4096)
-                        except Exception as e:
-                            print(e)
+                            raw_response += await reader.readline()
+                        except Exception:
                             asyncio.sleep(0)
                             continue
                     if raw_response == b"":
