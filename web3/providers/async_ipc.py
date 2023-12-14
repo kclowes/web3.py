@@ -171,3 +171,5 @@ class AsyncIPCProvider(AsyncJSONBaseProvider):
                     else:
                         await asyncio.sleep(0)
                         continue
+
+            return await asyncio.wait_for(read(), 120)
