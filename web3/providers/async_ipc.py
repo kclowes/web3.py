@@ -25,6 +25,9 @@ from typing import (
 from web3._utils.async_caching import (
     async_lock,
 )
+from web3._utils.threads import (
+    Timeout,
+)
 from web3.types import (
     RPCEndpoint,
     RPCResponse,
@@ -144,20 +147,26 @@ class AsyncIPCProvider(AsyncJSONBaseProvider):
                 await writer.drain()
 
             raw_response = b""
-            while True:
-                # async with async_lock(_async_session_pool, _async_session_cache_lock):
-                breakpoint()
-                raw_response += await reader.read(4096)
-                if raw_response == b"":
-                    await asyncio.sleep(0)
-                elif has_valid_json_rpc_ending(raw_response):
-                    try:
-                        response = self.decode_rpc_response(raw_response)
-                    except JSONDecodeError:
+            async with asyncio.timeout(self.timeout) as timeout:
+                while True:
+                    async with async_lock(_async_session_pool, _async_session_cache_lock):
+                        try:
+                            raw_response += await reader.read(4096)
+                        except Exception as e:
+                            print(e)
+                            asyncio.sleep(0)
+                            continue
+                    if raw_response == b"":
                         await asyncio.sleep(0)
                         continue
+                    elif has_valid_json_rpc_ending(raw_response):
+                        try:
+                            response = self.decode_rpc_response(raw_response)
+                        except JSONDecodeError:
+                            await asyncio.sleep(0)
+                            continue
+                        else:
+                            return response
                     else:
-                        return response
-                else:
-                    await asyncio.sleep(0)
-                    continue
+                        await asyncio.sleep(0)
+                        continue

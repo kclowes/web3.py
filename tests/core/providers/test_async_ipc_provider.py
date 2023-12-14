@@ -4,6 +4,10 @@ import pathlib
 import pytest
 import socket
 import tempfile
+from threading import (
+    Thread,
+)
+import time
 import uuid
 
 from web3.auto.gethdev import (
@@ -60,29 +64,26 @@ def simple_ipc_server(jsonrpc_ipc_pipe_path):
 
 
 @pytest.fixture
-@pytest.mark.asyncio
-async def serve_empty_result(simple_ipc_server):
-    async def reply():
-        connection, client_address = await asyncio.wait_for(
-            asyncio.create_task(simple_ipc_server.accept()), 1
-        )
+def serve_empty_result(simple_ipc_server):
+    def reply():
+        connection, client_address = simple_ipc_server.accept()
         try:
-            await asyncio.wait_for(connection.recv(1024), 1)
+            connection.recv(1024)
             connection.sendall(b'{"id":1, "result": {}')
-            await asyncio.sleep(0.1)
+            time.sleep(0.1)
             connection.sendall(b"}")
         finally:
             # Clean up the connection
             connection.close()
             simple_ipc_server.close()
 
-    task = asyncio.create_task(reply())
+    thd = Thread(target=reply, daemon=True)
+    thd.start()
 
     try:
         yield
     finally:
-        task.cancel()
-        await task
+        thd.join()
 
 
 @pytest.mark.asyncio
@@ -90,7 +91,7 @@ async def test_async_waits_for_full_result(jsonrpc_ipc_pipe_path, serve_empty_re
     provider = AsyncIPCProvider(pathlib.Path(jsonrpc_ipc_pipe_path), timeout=3)
     result = await provider.make_request("method", [])
     assert result == {"id": 1, "result": {}}
-    sock = provider._socket
+    sock = provider._socket.sock
     reader, writer = sock
     writer.close()
     await writer.wait_closed()
