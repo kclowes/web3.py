@@ -143,7 +143,7 @@ class AsyncIPCProvider(AsyncJSONBaseProvider):
                 writer.write(request)
                 await writer.drain()
 
-            async def read():
+            async def wait_for_response() -> RPCResponse:
                 raw_response = b""
                 while True:
                     async with async_lock(
@@ -152,7 +152,7 @@ class AsyncIPCProvider(AsyncJSONBaseProvider):
                         try:
                             raw_response += await reader.readline()
                         except Exception:
-                            asyncio.sleep(0)
+                            await asyncio.sleep(0)
                             continue
                     if raw_response == b"":
                         await asyncio.sleep(0)
@@ -169,4 +169,4 @@ class AsyncIPCProvider(AsyncJSONBaseProvider):
                         await asyncio.sleep(0)
                         continue
 
-            return await asyncio.wait_for(read(), 120)
+            return await asyncio.wait_for(wait_for_response(), 120)
