@@ -24,6 +24,9 @@ from hexbytes import (
     HexBytes,
 )
 import requests
+from websockets.protocol import (
+    State,
+)
 
 from web3._utils.http import (
     DEFAULT_HTTP_TIMEOUT,
@@ -159,7 +162,7 @@ def async_mock_offchain_lookup_request_response(
 
 
 class WebSocketMessageStreamMock:
-    closed: bool = False
+    state: State = State.OPEN
 
     def __init__(
         self, messages: Collection[bytes] = None, raise_exception: Exception = None
