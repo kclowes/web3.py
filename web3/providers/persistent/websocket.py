@@ -140,12 +140,12 @@ class WebSocketProvider(PersistentConnectionProvider):
     async def _provider_specific_connect(self) -> None:
         self._ws = await connect(self.endpoint_uri, **self.websocket_kwargs)
 
-    def conn_is_open(self) -> bool:
+    def is_open(self) -> bool:
         return self._ws.state == State.OPEN
 
     async def _provider_specific_disconnect(self) -> None:
         # this should remain idempotent
-        if self._ws is not None and self.conn_is_open():
+        if self._ws is not None and self.is_open():
             await self._ws.close()
             self._ws = None
 
