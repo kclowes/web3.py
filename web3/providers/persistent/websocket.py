@@ -68,9 +68,7 @@ class WebSocketProvider(PersistentConnectionProvider):
     ) -> None:
         # initialize the endpoint_uri before calling the super constructor
         self.endpoint_uri = (
-            URI(endpoint_uri)
-            if endpoint_uri is not None
-            else get_default_endpoint()
+            URI(endpoint_uri) if endpoint_uri is not None else get_default_endpoint()
         )
         super().__init__(**kwargs)
         self.use_text_frames = use_text_frames
@@ -95,9 +93,7 @@ class WebSocketProvider(PersistentConnectionProvider):
                     f"{found_restricted_keys}."
                 )
 
-        self.websocket_kwargs = merge(
-            DEFAULT_WEBSOCKET_KWARGS, websocket_kwargs or {}
-        )
+        self.websocket_kwargs = merge(DEFAULT_WEBSOCKET_KWARGS, websocket_kwargs or {})
 
     def __str__(self) -> str:
         return f"WebSocket connection: {self.endpoint_uri}"
@@ -127,9 +123,7 @@ class WebSocketProvider(PersistentConnectionProvider):
         if self.use_text_frames:
             payload = request_data.decode("utf-8")
 
-        await asyncio.wait_for(
-            self._ws.send(payload), timeout=self.request_timeout
-        )
+        await asyncio.wait_for(self._ws.send(payload), timeout=self.request_timeout)
 
     async def socket_recv(self) -> RPCResponse:
         raw_response = await self._ws.recv()
