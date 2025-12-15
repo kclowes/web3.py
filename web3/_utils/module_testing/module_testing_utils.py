@@ -165,7 +165,9 @@ class WebSocketMessageStreamMock:
     state: State = State.OPEN
 
     def __init__(
-        self, messages: Collection[bytes] = None, raise_exception: Exception = None
+        self,
+        messages: Collection[bytes] = None,
+        raise_exception: Exception = None,
     ) -> None:
         self.queue = asyncio.Queue()  # type: ignore  # py38 issue
         for msg in messages or []:

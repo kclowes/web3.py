@@ -98,14 +98,10 @@ def bytes32_contract_factory(w3):
 @pytest.fixture(
     params=[
         "0x0406040604060406040604060406040604060406040604060406040604060406",
-        HexBytes(
-            "0406040604060406040604060406040604060406040604060406040604060406"
-        ),
+        HexBytes("0406040604060406040604060406040604060406040604060406040604060406"),
     ]
 )
-def bytes32_contract(
-    w3, bytes32_contract_factory, request, address_conversion_func
-):
+def bytes32_contract(w3, bytes32_contract_factory, request, address_conversion_func):
     return deploy(
         w3,
         bytes32_contract_factory,
@@ -143,9 +139,7 @@ def test_deploy_raises_due_to_strict_byte_checking_by_default(
             w3,
             bytes32_contract_factory,
             address_conversion_func,
-            args=[
-                "0406040604060406040604060406040604060406040604060406040604060406"
-            ],
+            args=["0406040604060406040604060406040604060406040604060406040604060406"],
         )
 
 
@@ -168,9 +162,7 @@ def test_call_no_arguments_no_parens(math_contract):
 
 
 def test_call_with_one_argument(math_contract, call):
-    result = call(
-        contract=math_contract, contract_function="multiply7", func_args=[3]
-    )
+    result = call(contract=math_contract, contract_function="multiply7", func_args=[3])
     assert result == 21
 
 
@@ -182,9 +174,7 @@ def test_call_with_one_argument(math_contract, call):
         (tuple(), {"a": 9, "b": 7}),
     ),
 )
-def test_call_with_multiple_arguments(
-    math_contract, call, call_args, call_kwargs
-):
+def test_call_with_multiple_arguments(math_contract, call, call_args, call_kwargs):
     result = call(
         contract=math_contract,
         contract_function="add",
@@ -211,9 +201,7 @@ def test_saved_method_call_with_multiple_arguments(
 
 
 def test_call_get_w3_value(function_name_tester_contract, call):
-    result = call(
-        contract=function_name_tester_contract, contract_function="w3"
-    )
+    result = call(contract=function_name_tester_contract, contract_function="w3")
     assert result is True
 
 
@@ -226,9 +214,7 @@ def test_call_get_string_value(string_contract, call):
 
 
 def test_call_get_bytes32_array(arrays_contract, call):
-    result = call(
-        contract=arrays_contract, contract_function="getBytes32Value"
-    )
+    result = call(contract=arrays_contract, contract_function="getBytes32Value")
     # expected_bytes32_array = [keccak('0'), keccak('1')]
     expected_bytes32_array = [
         b"\x04HR\xb2\xa6p\xad\xe5@~x\xfb(c\xc5\x1d\xe9\xfc\xb9eB\xa0q\x86\xfe:\xed\xa6\xbb\x8a\x11m",  # noqa: E501
@@ -238,9 +224,7 @@ def test_call_get_bytes32_array(arrays_contract, call):
 
 
 def test_call_get_bytes32_const_array(arrays_contract, call):
-    result = call(
-        contract=arrays_contract, contract_function="getBytes32ConstValue"
-    )
+    result = call(contract=arrays_contract, contract_function="getBytes32ConstValue")
     # expected_bytes32_array = [keccak('A'), keccak('B')]
     expected_bytes32_array = [
         b"\x03x?\xac.\xfe\xd8\xfb\xc9\xadD>Y.\xe3\x0ea\xd6_G\x11@\xc1\x0c\xa1U\xe97\xb45\xb7`",  # noqa: E501
@@ -256,9 +240,7 @@ def test_call_get_byte_array(arrays_contract, call):
 
 
 def test_call_get_byte_array_non_strict(non_strict_arrays_contract, call):
-    result = call(
-        contract=non_strict_arrays_contract, contract_function="getByteValue"
-    )
+    result = call(contract=non_strict_arrays_contract, contract_function="getByteValue")
     expected_non_strict_byte_arr = [b"\xff", b"\xff", b"\xff", b"\xff"]
     assert result == expected_non_strict_byte_arr
 
@@ -298,9 +280,7 @@ def test_set_byte_array_non_strict(
         contract_function="setByteValue",
         func_args=[args],
     )
-    result = call(
-        contract=non_strict_arrays_contract, contract_function="getByteValue"
-    )
+    result = call(contract=non_strict_arrays_contract, contract_function="getByteValue")
     assert result == expected
 
 
@@ -318,16 +298,12 @@ def test_set_byte_array_with_invalid_args(arrays_contract, transact, args):
 
 
 def test_call_get_byte_const_array_strict_by_default(arrays_contract, call):
-    result = call(
-        contract=arrays_contract, contract_function="getByteConstValue"
-    )
+    result = call(contract=arrays_contract, contract_function="getByteConstValue")
     expected_byte_arr = [b"\x00", b"\x01"]
     assert result == expected_byte_arr
 
 
-def test_call_get_byte_const_array_non_strict(
-    non_strict_arrays_contract, call
-):
+def test_call_get_byte_const_array_non_strict(non_strict_arrays_contract, call):
     result = call(
         contract=non_strict_arrays_contract,
         contract_function="getByteConstValue",
@@ -344,9 +320,7 @@ def test_call_read_address_variable(contract_with_constructor_address, call):
     assert result == "0xd3CdA913deB6f67967B99D67aCDFa1712C293601"
 
 
-def test_init_with_ens_name_arg(
-    w3, contract_with_constructor_address_factory, call
-):
+def test_init_with_ens_name_arg(w3, contract_with_constructor_address_factory, call):
     with contract_ens_addresses(
         contract_with_constructor_address_factory,
         [("arg-name.eth", "0xBB9bc244D798123fDe783fCc1C72d3Bb8C189413")],
@@ -374,9 +348,7 @@ def test_call_get_bytes_value_strict_by_default(bytes_contract, call):
 
 
 def test_call_get_bytes_value_non_strict(non_strict_bytes_contract, call):
-    result = call(
-        contract=non_strict_bytes_contract, contract_function="getValue"
-    )
+    result = call(contract=non_strict_bytes_contract, contract_function="getValue")
     assert result == b"\x04\x06"
 
 
@@ -503,9 +475,7 @@ def test_call_address_reflector_name_array(address_reflector_contract, call):
         "0xFeC2079e80465cc8C687fFF9EE6386ca447aFec4",
     ]
 
-    with contract_ens_addresses(
-        address_reflector_contract, zip(names, addresses)
-    ):
+    with contract_ens_addresses(address_reflector_contract, zip(names, addresses)):
         result = call(
             contract=address_reflector_contract,
             contract_function="reflect",
@@ -528,9 +498,7 @@ def test_call_rejects_invalid_ens_name(address_reflector_contract, call):
 def test_call_missing_function(mismatched_math_contract, call):
     # note: contract being called needs to have a fallback function
     # (StringContract in this case)
-    expected_missing_function_error_message = (
-        "Could not decode contract function call"
-    )
+    expected_missing_function_error_message = "Could not decode contract function call"
     with pytest.raises(BadFunctionCallOutput) as exception_info:
         call(contract=mismatched_math_contract, contract_function="return13")
     assert expected_missing_function_error_message in str(exception_info.value)
@@ -587,9 +555,7 @@ def test_call_receive_fallback_function(
 
 
 def test_call_nonexistent_receive_function(fallback_function_contract):
-    with pytest.raises(
-        ABIReceiveNotFound, match="No receive function was found"
-    ):
+    with pytest.raises(ABIReceiveNotFound, match="No receive function was found"):
         fallback_function_contract.receive.call()
 
 
@@ -615,9 +581,7 @@ def test_accepts_block_hash_as_identifier(w3, math_contract):
     math_contract.functions.incrementCounter().transact()
     more_blocks = w3.provider.make_request(method="evm_mine", params=[5])
 
-    old = math_contract.functions.counter().call(
-        block_identifier=blocks["result"][2]
-    )
+    old = math_contract.functions.counter().call(block_identifier=blocks["result"][2])
     new = math_contract.functions.counter().call(
         block_identifier=more_blocks["result"][2]
     )
@@ -645,12 +609,8 @@ def test_returns_data_from_specified_block(w3, math_contract):
     math_contract.functions.incrementCounter().transact()
     math_contract.functions.incrementCounter().transact()
 
-    output1 = math_contract.functions.counter().call(
-        block_identifier=start_num + 6
-    )
-    output2 = math_contract.functions.counter().call(
-        block_identifier=start_num + 7
-    )
+    output1 = math_contract.functions.counter().call(block_identifier=start_num + 6)
+    output2 = math_contract.functions.counter().call(block_identifier=start_num + 7)
 
     assert output1 == 1
     assert output2 == 2
@@ -845,18 +805,12 @@ def test_call_abi_no_functions(w3):
         contract.functions.thisFunctionDoesNotExist().call()
 
 
-def test_call_not_sending_ether_to_nonpayable_function(
-    payable_tester_contract, call
-):
-    result = call(
-        contract=payable_tester_contract, contract_function="doNoValueCall"
-    )
+def test_call_not_sending_ether_to_nonpayable_function(payable_tester_contract, call):
+    result = call(contract=payable_tester_contract, contract_function="doNoValueCall")
     assert result == []
 
 
-def test_call_sending_ether_to_nonpayable_function(
-    payable_tester_contract, call
-):
+def test_call_sending_ether_to_nonpayable_function(payable_tester_contract, call):
     with pytest.raises(Web3ValidationError):
         call(
             contract=payable_tester_contract,
@@ -1133,9 +1087,7 @@ def test_call_tuple_contract_with_decode_tuples_set(
     type_str,
     namedtuple_repr,
 ):
-    result = tuple_contract_with_decode_tuples.functions.method(
-        method_input
-    ).call()
+    result = tuple_contract_with_decode_tuples.functions.method(method_input).call()
 
     # check contract output matches dict_to_namedtuple output
     namedtuple_from_input = recursive_dict_to_namedtuple(method_input)
@@ -1232,9 +1184,7 @@ def test_call_tuple_contract_with_decode_tuples_set(
         ),
     ),
 )
-def test_call_nested_tuple_contract(
-    nested_tuple_contract, method_input, expected
-):
+def test_call_nested_tuple_contract(nested_tuple_contract, method_input, expected):
     result = nested_tuple_contract.functions.method(method_input).call()
     assert result == expected
 
@@ -1366,15 +1316,11 @@ async def async_bytes_contract(
 @pytest_asyncio.fixture(
     params=[
         "0x0406040604060406040604060406040604060406040604060406040604060406",
-        HexBytes(
-            "0406040604060406040604060406040604060406040604060406040604060406"
-        ),
+        HexBytes("0406040604060406040604060406040604060406040604060406040604060406"),
     ],
 )
 async def async_bytes32_contract(async_w3, request, address_conversion_func):
-    async_bytes32_contract_factory = async_w3.eth.contract(
-        **BYTES32_CONTRACT_DATA
-    )
+    async_bytes32_contract_factory = async_w3.eth.contract(**BYTES32_CONTRACT_DATA)
     return await async_deploy(
         async_w3,
         async_bytes32_contract_factory,
@@ -1390,9 +1336,7 @@ async def async_undeployed_math_contract(
     empty_address = address_conversion_func(
         "0x000000000000000000000000000000000000dEaD"
     )
-    _undeployed_math_contract = async_math_contract_factory(
-        address=empty_address
-    )
+    _undeployed_math_contract = async_math_contract_factory(address=empty_address)
     return _undeployed_math_contract
 
 
@@ -1403,12 +1347,8 @@ async def async_mismatched_math_contract(
     async_math_contract_factory,
     address_conversion_func,
 ):
-    deploy_txn = await async_string_contract_factory.constructor(
-        "Caqalai"
-    ).transact()
-    deploy_receipt = await async_w3.eth.wait_for_transaction_receipt(
-        deploy_txn
-    )
+    deploy_txn = await async_string_contract_factory.constructor("Caqalai").transact()
+    deploy_receipt = await async_w3.eth.wait_for_transaction_receipt(deploy_txn)
     assert deploy_receipt is not None
     address = address_conversion_func(deploy_receipt["contractAddress"])
     _mismatched_math_contract = async_math_contract_factory(address=address)
@@ -1433,16 +1373,14 @@ async def test_async_deploy_raises_due_to_strict_byte_checking_by_default(
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "args", ("0x0406", "0406", HexBytes("0406"), b"\x04\x06")
-)
+@pytest.mark.parametrize("args", ("0x0406", "0406", HexBytes("0406"), b"\x04\x06"))
 async def test_async_deploy_with_non_strict_abi_check(
     async_w3_non_strict_abi,
     address_conversion_func,
     args,
 ):
-    async_non_strict_bytes_contract_factory = (
-        async_w3_non_strict_abi.eth.contract(**BYTES_CONTRACT_DATA)
+    async_non_strict_bytes_contract_factory = async_w3_non_strict_abi.eth.contract(
+        **BYTES_CONTRACT_DATA
     )
     deployed_contract = await async_deploy(
         async_w3_non_strict_abi,
@@ -1497,17 +1435,13 @@ async def test_async_call_with_multiple_arguments(
 async def test_async_saved_method_call_with_multiple_arguments(
     async_math_contract, call_args, call_kwargs
 ):
-    math_contract_add = async_math_contract.functions.add(
-        *call_args, **call_kwargs
-    )
+    math_contract_add = async_math_contract.functions.add(*call_args, **call_kwargs)
     result = await math_contract_add.call()
     assert result == 16
 
 
 @pytest.mark.asyncio
-async def test_async_call_get_w3_value(
-    async_function_name_tester_contract, async_call
-):
+async def test_async_call_get_w3_value(async_function_name_tester_contract, async_call):
     result = await async_call(
         contract=async_function_name_tester_contract, contract_function="w3"
     )
@@ -1539,9 +1473,7 @@ async def test_async_call_get_bytes32_array(async_arrays_contract, async_call):
 
 
 @pytest.mark.asyncio
-async def test_async_call_get_bytes32_const_array(
-    async_arrays_contract, async_call
-):
+async def test_async_call_get_bytes32_const_array(async_arrays_contract, async_call):
     result = await async_call(
         contract=async_arrays_contract,
         contract_function="getBytes32ConstValue",
@@ -1576,9 +1508,7 @@ async def test_async_call_get_byte_array_non_strict(
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "args,expected", [([b""], [b"\x00"]), (["0x"], [b"\x00"])]
-)
+@pytest.mark.parametrize("args,expected", [([b""], [b"\x00"]), (["0x"], [b"\x00"])])
 async def test_async_set_byte_array_non_strict(
     async_non_strict_arrays_contract,
     async_call,
@@ -1600,9 +1530,7 @@ async def test_async_set_byte_array_non_strict(
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "args,expected", [([b"1"], [b"1"]), (["0xDe"], [b"\xde"])]
-)
+@pytest.mark.parametrize("args,expected", [([b"1"], [b"1"]), (["0xDe"], [b"\xde"])])
 async def test_async_set_byte_array_strict_by_default(
     async_arrays_contract, async_call, async_transact, args, expected
 ):
@@ -1671,16 +1599,12 @@ async def test_async_init_with_ens_name_arg(
             ],
         )
 
-    result = await async_call(
-        contract=address_contract, contract_function="testAddr"
-    )
+    result = await async_call(contract=address_contract, contract_function="testAddr")
     assert result == "0xBB9bc244D798123fDe783fCc1C72d3Bb8C189413"
 
 
 @pytest.mark.asyncio
-async def test_async_call_read_bytes_variable(
-    async_bytes_contract, async_call
-):
+async def test_async_call_read_bytes_variable(async_bytes_contract, async_call):
     result = await async_call(
         contract=async_bytes_contract, contract_function="constValue"
     )
@@ -1696,9 +1620,7 @@ async def test_async_call_get_bytes_value(async_bytes_contract, async_call):
 
 
 @pytest.mark.asyncio
-async def test_async_call_read_bytes32_variable(
-    async_bytes32_contract, async_call
-):
+async def test_async_call_read_bytes32_variable(async_bytes32_contract, async_call):
     result = await async_call(
         contract=async_bytes32_contract, contract_function="constValue"
     )
@@ -1709,9 +1631,7 @@ async def test_async_call_read_bytes32_variable(
 
 
 @pytest.mark.asyncio
-async def test_async_call_get_bytes32_value(
-    async_bytes32_contract, async_call
-):
+async def test_async_call_get_bytes32_value(async_bytes32_contract, async_call):
     result = await async_call(
         contract=async_bytes32_contract, contract_function="getValue"
     )
@@ -1865,14 +1785,10 @@ async def test_async_call_rejects_invalid_ens_name(
 
 
 @pytest.mark.asyncio
-async def test_async_call_missing_function(
-    async_mismatched_math_contract, async_call
-):
+async def test_async_call_missing_function(async_mismatched_math_contract, async_call):
     # note: contract being called needs to have a fallback function
     # (StringContract in this case)
-    expected_missing_function_error_message = (
-        "Could not decode contract function call"
-    )
+    expected_missing_function_error_message = "Could not decode contract function call"
     with pytest.raises(BadFunctionCallOutput) as exception_info:
         await async_call(
             contract=async_mismatched_math_contract,
@@ -1930,16 +1846,12 @@ async def test_async_call_receive_fallback_function(
     else:
         raise AssertionError("contract must be either receive or no_receive")
 
-    initial_value = await async_call(
-        contract=contract, contract_function="getText"
-    )
+    initial_value = await async_call(contract=contract, contract_function="getText")
     assert initial_value == ""
     to = {"to": contract.address}
     merged = {**to, **tx_params}
     await async_w3.eth.send_transaction(merged)
-    final_value = await async_call(
-        contract=contract, contract_function="getText"
-    )
+    final_value = await async_call(contract=contract, contract_function="getText")
     assert final_value == expected
 
 
@@ -1947,21 +1859,15 @@ async def test_async_call_receive_fallback_function(
 async def test_async_call_nonexistent_receive_function(
     async_fallback_function_contract,
 ):
-    with pytest.raises(
-        ABIReceiveNotFound, match="No receive function was found"
-    ):
+    with pytest.raises(ABIReceiveNotFound, match="No receive function was found"):
         await async_fallback_function_contract.receive.call()
 
 
 @pytest.mark.asyncio
-async def test_async_throws_error_if_block_out_of_range(
-    async_w3, async_math_contract
-):
+async def test_async_throws_error_if_block_out_of_range(async_w3, async_math_contract):
     await async_w3.provider.make_request(method="evm_mine", params=[20])
     with pytest.raises(BlockNumberOutOfRange):
-        await async_math_contract.functions.counter().call(
-            block_identifier=-50
-        )
+        await async_math_contract.functions.counter().call(block_identifier=-50)
 
 
 @pytest.mark.asyncio
@@ -1969,9 +1875,7 @@ async def test_async_accepts_latest_block(async_w3, async_math_contract):
     await async_w3.provider.make_request(method="evm_mine", params=[5])
     await async_math_contract.functions.incrementCounter().transact()
 
-    late = await async_math_contract.functions.counter().call(
-        block_identifier="latest"
-    )
+    late = await async_math_contract.functions.counter().call(block_identifier="latest")
     pend = await async_math_contract.functions.counter().call(
         block_identifier="pending"
     )
@@ -1981,16 +1885,10 @@ async def test_async_accepts_latest_block(async_w3, async_math_contract):
 
 
 @pytest.mark.asyncio
-async def test_async_accepts_block_hash_as_identifier(
-    async_w3, async_math_contract
-):
-    blocks = await async_w3.provider.make_request(
-        method="evm_mine", params=[5]
-    )
+async def test_async_accepts_block_hash_as_identifier(async_w3, async_math_contract):
+    blocks = await async_w3.provider.make_request(method="evm_mine", params=[5])
     await async_math_contract.functions.incrementCounter().transact()
-    more_blocks = await async_w3.provider.make_request(
-        method="evm_mine", params=[5]
-    )
+    more_blocks = await async_w3.provider.make_request(method="evm_mine", params=[5])
 
     old = await async_math_contract.functions.counter().call(
         block_identifier=blocks["result"][2]
@@ -2004,20 +1902,14 @@ async def test_async_accepts_block_hash_as_identifier(
 
 
 @pytest.mark.asyncio
-async def test_async_neg_block_indexes_from_the_end(
-    async_w3, async_math_contract
-):
+async def test_async_neg_block_indexes_from_the_end(async_w3, async_math_contract):
     await async_w3.provider.make_request(method="evm_mine", params=[5])
     await async_math_contract.functions.incrementCounter().transact()
     await async_math_contract.functions.incrementCounter().transact()
     await async_w3.provider.make_request(method="evm_mine", params=[5])
 
-    output1 = await async_math_contract.functions.counter().call(
-        block_identifier=-7
-    )
-    output2 = await async_math_contract.functions.counter().call(
-        block_identifier=-6
-    )
+    output1 = await async_math_contract.functions.counter().call(block_identifier=-7)
+    output2 = await async_math_contract.functions.counter().call(block_identifier=-6)
 
     assert output1 == 1
     assert output2 == 2
@@ -2086,9 +1978,7 @@ async def test_async_function_1_match_identifier_wrong_args_encoding(
         ),
     ),
 )
-async def test_async_function_multiple_error_diagnoses(
-    async_w3, arg1, arg2, message
-):
+async def test_async_function_multiple_error_diagnoses(async_w3, arg1, arg2, message):
     Contract = async_w3.eth.contract(abi=MULTIPLE_FUNCTIONS)
     with pytest.raises(MismatchedABI, match=re.escape(message)):
         if arg2:
@@ -2325,9 +2215,7 @@ async def test_async_invalid_fixed_value_reflections(
         ),
     ),
 )
-async def test_async_call_tuple_contract(
-    async_tuple_contract, method_input, expected
-):
+async def test_async_call_tuple_contract(async_tuple_contract, method_input, expected):
     result = await async_tuple_contract.functions.method(method_input).call()
     assert result == expected
 
@@ -2498,9 +2386,7 @@ async def test_async_call_tuple_contract_with_decode_tuples_set(
 async def test_async_call_nested_tuple_contract(
     async_nested_tuple_contract, method_input, expected
 ):
-    result = await async_nested_tuple_contract.functions.method(
-        method_input
-    ).call()
+    result = await async_nested_tuple_contract.functions.method(method_input).call()
     assert result == expected
 
 
@@ -2557,11 +2443,9 @@ async def test_async_call_nested_tuple_contract_with_decode_tuples_set(
     type_str,
     namedtuple_repr,
 ):
-    result = (
-        await async_nested_tuple_contract_with_decode_tuples.functions.method(
-            method_input
-        ).call()
-    )
+    result = await async_nested_tuple_contract_with_decode_tuples.functions.method(
+        method_input
+    ).call()
 
     # check contract output matches dict_to_namedtuple output
     namedtuple_from_input = recursive_dict_to_namedtuple(method_input)
@@ -2583,9 +2467,7 @@ async def test_async_call_revert_contract(async_revert_contract):
         # eth-tester will do a gas estimation if we don't submit a gas value,
         # which does not contain the revert reason. Avoid that by giving a gas
         # value.
-        await async_revert_contract.functions.revertWithMessage().call(
-            {"gas": 100000}
-        )
+        await async_revert_contract.functions.revertWithMessage().call({"gas": 100000})
 
 
 @pytest.mark.asyncio
@@ -2595,9 +2477,7 @@ async def test_async_call_with_no_arguments(async_math_contract, call):
 
 
 @pytest.mark.asyncio
-async def test_async_call_with_no_arguments_no_parens(
-    async_math_contract, call
-):
+async def test_async_call_with_no_arguments_no_parens(async_math_contract, call):
     result = await async_math_contract.functions.return13.call()
     assert result == 13
 
@@ -2609,9 +2489,7 @@ async def test_async_call_with_one_argument(async_math_contract, call):
 
 
 @pytest.mark.asyncio
-async def test_async_returns_data_from_specified_block(
-    async_w3, async_math_contract
-):
+async def test_async_returns_data_from_specified_block(async_w3, async_math_contract):
     start_num = await async_w3.eth.get_block("latest")
     await async_w3.provider.make_request(method="evm_mine", params=[5])
     await async_math_contract.functions.incrementCounter().transact()
@@ -2629,32 +2507,21 @@ async def test_async_returns_data_from_specified_block(
 
 
 @pytest.mark.asyncio
-async def test_async_changing_default_block_identifier(
-    async_w3, async_math_contract
-):
+async def test_async_changing_default_block_identifier(async_w3, async_math_contract):
     assert await async_math_contract.caller.counter() == 0
     assert async_w3.eth.default_block == "latest"
 
     await async_math_contract.functions.incrementCounter(7).transact()
     assert await async_math_contract.caller.counter() == 7
 
-    assert (
-        await async_math_contract.functions.counter().call(block_identifier=1)
-        == 0
-    )
+    assert await async_math_contract.functions.counter().call(block_identifier=1) == 0
     async_w3.eth.default_block = 1
     assert (
-        await async_math_contract.functions.counter().call(
-            block_identifier=None
-        )
-        == 0
+        await async_math_contract.functions.counter().call(block_identifier=None) == 0
     )
     async_w3.eth.default_block = 0x2
     assert (
-        await async_math_contract.functions.counter().call(
-            block_identifier=None
-        )
-        == 7
+        await async_math_contract.functions.counter().call(block_identifier=None) == 7
     )
 
 

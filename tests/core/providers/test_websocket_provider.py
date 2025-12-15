@@ -14,6 +14,9 @@ from websockets import (
     ConnectionClosed,
     ConnectionClosedOK,
 )
+from websockets.protocol import (
+    State,
+)
 
 from web3 import (
     AsyncWeb3,
@@ -42,12 +45,12 @@ from web3.utils import (
 
 def _mock_ws(provider):
     provider._ws = AsyncMock()
-    provider._ws.closed = False
+    provider._ws.state = State.OPEN
 
 
 async def _mocked_ws_conn():
     _conn = AsyncMock()
-    _conn.closed = False
+    _conn.state = State.OPEN
     return _conn
 
 
@@ -354,17 +357,21 @@ async def test_async_iterator_pattern_exception_handling_for_requests():
             raise_exception=ConnectionClosed(None, None)
         ),
     ):
-        async for w3 in AsyncWeb3(WebSocketProvider("ws://mocked")):
-            try:
-                await w3.eth.block_number
-            except ConnectionClosed:
-                if iterations == 3:
-                    break
-                else:
-                    iterations += 1
-                    continue
+        agen = AsyncWeb3(WebSocketProvider("ws://mocked")).__aiter__()
+        try:
+            async for w3 in agen:
+                try:
+                    await w3.eth.block_number
+                except ConnectionClosed:
+                    if iterations == 3:
+                        break
+                    else:
+                        iterations += 1
+                        continue
 
-            pytest.fail("Expected `ConnectionClosed` exception.")
+                pytest.fail("Expected `ConnectionClosed` exception.")
+        finally:
+            await agen.aclose()
 
         assert iterations == 3
 
@@ -379,19 +386,23 @@ async def test_async_iterator_pattern_exception_handling_for_subscriptions():
             raise_exception=ConnectionClosed(None, None)
         ),
     ):
-        async for w3 in AsyncWeb3(WebSocketProvider("ws://mocked")):
-            try:
-                async for _ in w3.socket.process_subscriptions():
-                    # raises exception
-                    pass
-            except ConnectionClosed:
-                if iterations == 3:
-                    break
-                else:
-                    iterations += 1
-                    continue
+        agen = AsyncWeb3(WebSocketProvider("ws://mocked")).__aiter__()
+        try:
+            async for w3 in agen:
+                try:
+                    async for _ in w3.socket.process_subscriptions():
+                        # raises exception
+                        pass
+                except ConnectionClosed:
+                    if iterations == 3:
+                        break
+                    else:
+                        iterations += 1
+                        continue
 
-            pytest.fail("Expected `ConnectionClosed` exception.")
+                pytest.fail("Expected `ConnectionClosed` exception.")
+        finally:
+            await agen.aclose()
 
         assert iterations == 3
 
