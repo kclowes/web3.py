@@ -36,6 +36,7 @@ extras_require = {
         "tox>=4.0.0",
         "mypy==1.10.0",
         "pre-commit>=3.4.0",
+        "cached-property>=2.0.1",
     ],
 }
 
