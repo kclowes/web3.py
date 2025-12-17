@@ -357,21 +357,17 @@ async def test_async_iterator_pattern_exception_handling_for_requests():
             raise_exception=ConnectionClosed(None, None)
         ),
     ):
-        agen = AsyncWeb3(WebSocketProvider("ws://mocked")).__aiter__()
-        try:
-            async for w3 in agen:
-                try:
-                    await w3.eth.block_number
-                except ConnectionClosed:
-                    if iterations == 3:
-                        break
-                    else:
-                        iterations += 1
-                        continue
+        async for w3 in AsyncWeb3(WebSocketProvider("ws://mocked")):
+            try:
+                await w3.eth.block_number
+            except ConnectionClosed:
+                if iterations == 3:
+                    break
+                else:
+                    iterations += 1
+                    continue
 
-                pytest.fail("Expected `ConnectionClosed` exception.")
-        finally:
-            await agen.aclose()
+            pytest.fail("Expected `ConnectionClosed` exception.")
 
         assert iterations == 3
 
@@ -386,23 +382,19 @@ async def test_async_iterator_pattern_exception_handling_for_subscriptions():
             raise_exception=ConnectionClosed(None, None)
         ),
     ):
-        agen = AsyncWeb3(WebSocketProvider("ws://mocked")).__aiter__()
-        try:
-            async for w3 in agen:
-                try:
-                    async for _ in w3.socket.process_subscriptions():
-                        # raises exception
-                        pass
-                except ConnectionClosed:
-                    if iterations == 3:
-                        break
-                    else:
-                        iterations += 1
-                        continue
+        async for w3 in AsyncWeb3(WebSocketProvider("ws://mocked")):
+            try:
+                async for _ in w3.socket.process_subscriptions():
+                    # raises exception
+                    pass
+            except ConnectionClosed:
+                if iterations == 3:
+                    break
+                else:
+                    iterations += 1
+                    continue
 
-                pytest.fail("Expected `ConnectionClosed` exception.")
-        finally:
-            await agen.aclose()
+            pytest.fail("Expected `ConnectionClosed` exception.")
 
         assert iterations == 3
 
